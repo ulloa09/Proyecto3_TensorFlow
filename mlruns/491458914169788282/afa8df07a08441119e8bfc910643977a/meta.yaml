@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/afa8df07a08441119e8bfc910643977a/artifacts
+end_time: 1760664213708
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: afa8df07a08441119e8bfc910643977a
+run_name: debonair-calf-922
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760664171850
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

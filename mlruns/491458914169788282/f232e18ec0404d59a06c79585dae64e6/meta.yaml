@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/f232e18ec0404d59a06c79585dae64e6/artifacts
+end_time: 1760664022396
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: f232e18ec0404d59a06c79585dae64e6
+run_name: capricious-fish-638
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760664022391
+status: 4
+tags: []
+user_id: mauriciomartinezulloa

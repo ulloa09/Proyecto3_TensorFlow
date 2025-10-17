@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/b4bfe44b3976435ab3ac4611b8bf469a/artifacts
+end_time: 1760665249036
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: b4bfe44b3976435ab3ac4611b8bf469a
+run_name: traveling-snail-377
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760665203856
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

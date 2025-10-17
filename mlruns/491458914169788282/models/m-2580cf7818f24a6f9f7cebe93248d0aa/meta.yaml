@@ -1,0 +1,10 @@
+artifact_location: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/models/m-2580cf7818f24a6f9f7cebe93248d0aa/artifacts
+creation_timestamp: 1760664255786
+experiment_id: '491458914169788282'
+last_updated_timestamp: 1760664259227
+model_id: m-2580cf7818f24a6f9f7cebe93248d0aa
+model_type: null
+name: model
+source_run_id: 93f2d7ae76e14be3a5fc8515399c91ff
+status: 2
+status_message: null

@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/37f5a132fd4d4cab99ac2a32ccaa2ae7/artifacts
+end_time: 1760664107923
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 37f5a132fd4d4cab99ac2a32ccaa2ae7
+run_name: rumbling-stag-831
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760664107899
+status: 4
+tags: []
+user_id: mauriciomartinezulloa

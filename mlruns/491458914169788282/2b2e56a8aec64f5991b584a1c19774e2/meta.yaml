@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/2b2e56a8aec64f5991b584a1c19774e2/artifacts
+end_time: 1760672114529
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 2b2e56a8aec64f5991b584a1c19774e2
+run_name: loud-vole-308
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760672053061
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

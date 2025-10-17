@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/70503aa37c3a47aa82575f272bc495a8/artifacts
+end_time: 1760667859491
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 70503aa37c3a47aa82575f272bc495a8
+run_name: nebulous-croc-600
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760667816560
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

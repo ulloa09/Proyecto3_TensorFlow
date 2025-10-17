@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/c41c89fd29b841a8a01b168e3458bcaf/artifacts
+end_time: 1760664303682
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: c41c89fd29b841a8a01b168e3458bcaf
+run_name: trusting-hare-372
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760664259229
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

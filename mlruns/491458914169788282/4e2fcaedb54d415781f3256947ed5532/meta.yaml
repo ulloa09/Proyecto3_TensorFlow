@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/4e2fcaedb54d415781f3256947ed5532/artifacts
+end_time: 1760548221618
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 4e2fcaedb54d415781f3256947ed5532
+run_name: redolent-roo-818
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760548221610
+status: 4
+tags: []
+user_id: mauriciomartinezulloa

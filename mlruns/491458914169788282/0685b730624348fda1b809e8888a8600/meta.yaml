@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/0685b730624348fda1b809e8888a8600/artifacts
+end_time: 1760670495227
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 0685b730624348fda1b809e8888a8600
+run_name: persistent-moth-460
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760670453290
+status: 3
+tags: []
+user_id: mauriciomartinezulloa

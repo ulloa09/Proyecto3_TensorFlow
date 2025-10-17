@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/491458914169788282/7d4de33725e9475fae640a3572d82c9f/artifacts
+end_time: 1760667912457
+entry_point_name: ''
+experiment_id: '491458914169788282'
+lifecycle_stage: active
+run_id: 7d4de33725e9475fae640a3572d82c9f
+run_name: fun-quail-383
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760667859494
+status: 3
+tags: []
+user_id: mauriciomartinezulloa
