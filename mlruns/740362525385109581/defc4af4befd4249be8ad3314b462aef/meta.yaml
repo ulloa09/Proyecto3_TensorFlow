@@ -1,11 +1,11 @@
 artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/740362525385109581/defc4af4befd4249be8ad3314b462aef/artifacts
+deleted_time: 1760816985977
 end_time: 1760816666729
 entry_point_name: ''
 experiment_id: '740362525385109581'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: defc4af4befd4249be8ad3314b462aef
 run_name: legendary-calf-678
-run_uuid: defc4af4befd4249be8ad3314b462aef
 source_name: ''
 source_type: 4
 source_version: ''

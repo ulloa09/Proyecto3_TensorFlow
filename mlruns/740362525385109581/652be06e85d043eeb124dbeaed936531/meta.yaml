@@ -1,11 +1,11 @@
 artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/740362525385109581/652be06e85d043eeb124dbeaed936531/artifacts
+deleted_time: 1760816985978
 end_time: 1760816565365
 entry_point_name: ''
 experiment_id: '740362525385109581'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 652be06e85d043eeb124dbeaed936531
 run_name: silent-bear-657
-run_uuid: 652be06e85d043eeb124dbeaed936531
 source_name: ''
 source_type: 4
 source_version: ''

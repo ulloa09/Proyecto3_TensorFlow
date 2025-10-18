@@ -1,11 +1,11 @@
 artifact_uri: file:///Users/mauriciomartinezulloa/Desktop/GitHub/ITESO/Proyecto3_TensorFlow/mlruns/740362525385109581/5718e3bd588e474eb51b1c701c653cf8/artifacts
+deleted_time: 1760816985987
 end_time: 1760816620084
 entry_point_name: ''
 experiment_id: '740362525385109581'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 5718e3bd588e474eb51b1c701c653cf8
 run_name: thundering-lamb-446
-run_uuid: 5718e3bd588e474eb51b1c701c653cf8
 source_name: ''
 source_type: 4
 source_version: ''
