@@ -24,10 +24,14 @@ data = data.reset_index()
 
 # Reordenar columnas y eliminar cualquier encabezado falso
 data = data[['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
-data['Date'] = pd.to_datetime(data['Date'])
 
 # Guardar limpio
 data.to_csv('wynn_daily_15y.csv', index=False)
 
 print(data.head())
 print(f"Datos descargados: {len(data)} registros entre {data['Date'].min()} y {data['Date'].max()}")
+
+def fechas(df):
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    return df

@@ -1,10 +1,23 @@
+import pandas as pd
+from P2_split import split_dfs
+from data_download import fechas
+from signals import generate_features
 
-import tensorflow as tf
-import mlflow
+#import tensorflow as tf
+#import mlflow
 
-# Loas and preprocess the CIFAR-10 dataset
+
+datos = pd.read_csv('wynn_daily_15y.csv')
+datos = fechas(datos)
+
+train_df, test_df, validation_df = split_dfs(datos, train=60, test=20, validation=20)
+generate_features(train_df)
+
+'''
+# Load and preprocess the CIFAR-10 dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 x_train, x_test = x_train / 255.0, x_test / 255.0
+
 
 mlflow .tensorflow.autolog()
 
@@ -62,3 +75,5 @@ for params in params_space:
         }
 
         print(f"Final metrics: {final_metrics}")
+
+'''

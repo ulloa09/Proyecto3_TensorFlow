@@ -7,10 +7,6 @@ def split_dfs(data, train:int, test:int, validation:int):
     # Asegura que los tres porcentajes cubran el 100% del dataset.
     assert train + test + validation == 100, "La suma de train, test y validation debe ser 100 exacto."
 
-    # --- Ordenamiento temporal ---
-    # Ordena por 'timestamp' para que los cortes respeten la secuencia cronológica.
-    data = data.sort_values("timestamp")
-
     # --- Cálculo de índices de corte ---
     # Define los límites de cada bloque con base en los porcentajes indicados.
     n = len(data)
