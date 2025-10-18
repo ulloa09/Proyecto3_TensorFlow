@@ -12,7 +12,7 @@ data = yf.download(
     end="2025-10-17",
     interval="1d",
     auto_adjust=False,
-    progress=False
+    progress=False,
 )
 
 # Aplana si existe un nivel superior de columnas (por el ticker)
@@ -26,12 +26,9 @@ data = data.reset_index()
 data = data[['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
 
 # Guardar limpio
-data.to_csv('wynn_daily_15y.csv', index=False)
+data.to_csv('data/wynn_daily_15y.csv', index=False)
 
 print(data.head())
 print(f"Datos descargados: {len(data)} registros entre {data['Date'].min()} y {data['Date'].max()}")
 
-def fechas(df):
-    df['Date'] = pd.to_datetime(df['Date'])
 
-    return df

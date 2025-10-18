@@ -1,5 +1,11 @@
+import pandas as pd
 from joblib import dump
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+
+def fechas(df):
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    return df
 
 def fit_scalers(train_df):
     """Entrena los tres escaladores con los datos de entrenamiento."""

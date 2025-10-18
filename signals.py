@@ -1,11 +1,15 @@
 import pandas as pd
 import pandas_ta as ta
 
+
+
 def generate_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
+    """d
     Genera 25 features técnicas a partir de datos OHLCV.
     Mezcla indicadores de momento, volatilidad y volumen.
     """
+
+    df = df.copy()
 
     # ==== MOMENTO ====
     # RSI (corto y medio plazo)
@@ -44,8 +48,8 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Bollinger Bands (ancho y %B)
     bbands = ta.bbands(df["Close"], length=20, std=2)
-    df["bb_width"] = (bbands["BBU_20_2.0"] - bbands["BBL_20_2.0"]) / bbands["BBM_20_2.0"]
-    df["bb_percent_b"] = (df["Close"] - bbands["BBL_20_2.0"]) / (bbands["BBU_20_2.0"] - bbands["BBL_20_2.0"])
+    df["bb_width"] = (bbands["BBU_20_2.0_2.0"] - bbands["BBL_20_2.0_2.0"]) / bbands["BBM_20_2.0_2.0"]
+    df["bb_percent_b"] = (df["Close"] - bbands["BBL_20_2.0_2.0"]) / (bbands["BBU_20_2.0_2.0"] - bbands["BBL_20_2.0_2.0"])
 
     # Std y Donchian
     df["std_20"] = df["Close"].rolling(20).std()
@@ -60,9 +64,34 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df["vol_sma_20"] = df["Volume"].rolling(20).mean()
     df["vol_zscore_20"] = (df["Volume"] - df["Volume"].rolling(20).mean()) / df["Volume"].rolling(20).std()
-    df["vwap_dev"] = (df["Close"] - ta.vwap(df["High"], df["Low"], df["Close"], df["Volume"])) / ta.vwap(df["High"], df["Low"], df["Close"], df["Volume"])
     df["vol_spike_ratio"] = df["Volume"] / df["Volume"].rolling(5).mean()
 
+    # --- VWAP deviation (sin modificar índice principal) ---
+    # Creamos una copia temporal para cumplir el requisito de pandas_ta
+    df_temp = df.copy()
+
+    # Si hay columna 'Date', la convertimos y la usamos solo en la copia
+    if "Date" in df_temp.columns:
+        df_temp["Date"] = pd.to_datetime(df_temp["Date"])
+        df_temp = df_temp.sort_values("Date")  # ordenar por fecha
+        df_temp = df_temp.set_index("Date")
+
+    # Calculamos VWAP usando la copia con DatetimeIndex
+    vwap_series = ta.vwap(df_temp["High"], df_temp["Low"], df_temp["Close"], df_temp["Volume"])
+
+    # Si VWAP devuelve algo válido, lo alineamos al índice original
+    if vwap_series is not None:
+        vwap_series = vwap_series.reset_index(drop=True)
+        df["vwap_dev"] = (df["Close"] - vwap_series) / vwap_series
+    else:
+        print("⚠️ VWAP no pudo calcularse (devuelve None).")
+        df["vwap_dev"] = None
+
+
+
+
     # Eliminar filas con NaN iniciales
-    print(f"Total de features: {len(df.columns)}'+'\n Total de Datos:'{len(df)}'")
+    print(f"Total de features:{len(df.columns)}\n Total de Datos: {len(df)}")
+    print(f"Datos NA:\n{df.isna().sum()}")
+
     return df
