@@ -1,7 +1,7 @@
 import pandas as pd
 from P2_split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
-from signals import generate_features
+from signals import generate_features, generate_targets
 
 #import tensorflow as tf
 #import mlflow
@@ -10,6 +10,7 @@ from signals import generate_features
 datos = pd.read_csv('data/wynn_daily_15y.csv')
 datos = fechas(datos)
 datos = generate_features(datos)
+datos = generate_targets(datos, horizon=1, lower_q=0.2, upper_q=0.8)
 
 train_df, test_df, validation_df = split_dfs(datos, train=60, test=20, validation=20)
 
@@ -30,4 +31,7 @@ val_scaled.to_csv("data/val_scaled.csv", index=False)
 
 print("Flujo completado ✅, datos listos para pasar a modelo")
 print(f"Tamaños de dfs escalados (deben coincidir con la división inicial)\ntrain:{train_scaled.shape, train_scaled.shape == train_df.shape}\ntest:{test_scaled.shape, test_scaled.shape == test_df.shape }\nvalidation:{val_scaled.shape, val_scaled.shape == validation_df.shape}")
+
+print(train_scaled)
+print(val_scaled)
 

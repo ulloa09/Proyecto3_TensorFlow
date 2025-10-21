@@ -4,7 +4,7 @@ import pandas_ta as ta
 
 
 def generate_features(df: pd.DataFrame) -> pd.DataFrame:
-    """d
+    """
     Genera 25 features técnicas a partir de datos OHLCV.
     Mezcla indicadores de momento, volatilidad y volumen.
     """
@@ -67,7 +67,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["vol_spike_ratio"] = df["Volume"] / df["Volume"].rolling(5).mean()
 
     # --- VWAP deviation (sin modificar índice principal) ---
-    # Creamos una copia temporal para cumplir el requisito de pandas_ta
+    # Requisito de ahuevo de pandas_ta
     df_temp = df.copy()
 
     # Si hay columna 'Date', la convertimos y la usamos solo en la copia
@@ -91,7 +91,55 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
     # Eliminar filas con NaN iniciales
-    print(f"Total de features:{len(df.columns)}\n Total de Datos: {len(df)}")
+    print(f"Total de Datos: {len(df)}")
     print(f"Datos NA:\n{df.isna().sum()}")
+
+    return df
+
+
+def generate_targets(df: pd.DataFrame, horizon: int, lower_q: float, upper_q: float) -> pd.DataFrame:
+    """
+    Genera la variable objetivo (target) para señales de trading.
+    Las etiquetas se basan en el rendimiento futuro del precio de cierre.
+
+    Parámetros
+    ----------
+    df : pd.DataFrame
+        DataFrame con columna 'Close'.
+    horizon : int, opcional
+        Número de días hacia adelante para calcular el rendimiento futuro.
+    lower_q : float, opcional
+        Percentil inferior para definir la frontera de señal short (-1).
+    upper_q : float, opcional
+        Percentil superior para definir la frontera de señal long (1).
+
+    Retorna
+    -------
+    pd.DataFrame
+        DataFrame con columnas adicionales:
+        - 'fwd_ret': rendimiento futuro
+        - 'target': señal (-1, 0, 1)
+    """
+
+    df = df.copy()
+
+    # 1. Calcular rendimiento futuro (forward return)
+    df["fwd_ret"] = df["Close"].shift(-horizon) / df["Close"] - 1
+
+    # 2. Definir umbrales dinámicos (percentiles)
+    upper_thr = df["fwd_ret"].quantile(upper_q)
+    lower_thr = df["fwd_ret"].quantile(lower_q)
+
+    # 3. Asignar etiquetas
+    df["target"] = 0
+    df.loc[df["fwd_ret"] > upper_thr, "target"] = 1
+    df.loc[df["fwd_ret"] < lower_thr, "target"] = -1
+
+    # 4. Eliminar los últimos 'horizon' registros sin datos futuros
+    df = df.iloc[:-horizon]
+
+    # 5. Mostrar resumen para control
+    print(f"Targets generados con horizon={horizon}, umbrales=({lower_thr:.5f}, {upper_thr:.5f})")
+    print(df["target"].value_counts(normalize=True))
 
     return df
