@@ -3,9 +3,6 @@ from P2_split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from signals import generate_features, generate_targets
 
-#import tensorflow as tf
-#import mlflow
-
 
 datos = pd.read_csv('data/wynn_daily_15y.csv')
 datos = fechas(datos)
