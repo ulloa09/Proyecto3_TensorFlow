@@ -101,7 +101,7 @@ def backtest(data: pd.DataFrame,
                 ))
 
         # --- Actualización del valor del portafolio ---
-        current_port_value = get_portfolio_value(
+        current_port_value = portfolio_value(
             cash, active_long, active_short,
             current_price, n_shares
         )
