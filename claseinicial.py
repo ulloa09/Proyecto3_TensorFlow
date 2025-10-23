@@ -8,13 +8,12 @@ x_train, x_test = x_train / 255.0, x_test / 255.0
 
 
 mlflow .tensorflow.autolog()
-
 mlflow.set_experiment("CNN Tuning")
 
 print("x_train shape:", x_train.shape)
 
 
-def build_model(params):
+def build_cnn_model(params):
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Input(shape=(32, 32, 3)))
     num_filters = params.get("conv_filters", 32)
@@ -53,9 +52,9 @@ for params in params_space:
         run_name = f"conv{params['conv_layers']}_filters{params['conv_filters']}"
         run_name += f"_dense{params['dense_units']}_activation{params['activation']}"
 
-        model = build_model(params)
+        model_cnn = build_cnn_model(params)
 
-        hist = model.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=2)
+        hist = model_cnn.fit(x_train, y_train, epochs=5, validation_data=(x_test, y_test), verbose=2)
 
         final_metrics = {
             "val_accuracy": hist.history['val_accuracy'][-1],
