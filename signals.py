@@ -90,9 +90,9 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 
-    # Eliminar filas con NaN iniciales
-    print(f"Total de Datos: {len(df)}")
-    print(f"Datos NA:\n{df.isna().sum()}")
+    # Eliminar filas con Nas
+    print(f"Total de Datos previo a drop: {len(df)}")
+    df = df.dropna()
 
     return df
 
