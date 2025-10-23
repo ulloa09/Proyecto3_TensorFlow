@@ -1,22 +1,26 @@
 import pandas as pd
 import numpy as np
 import mlflow
-from P2_backtest import backtest 
-from P2_metrics import all_metrics 
-import matplotlib.pyplot as plt
+from P2_backtest import backtest
+from P2_metrics import all_metrics
+from graphs import (
+    plot_portfolio_train,
+    plot_portfolio_test,
+    plot_portfolio_validation,
+    plot_portfolio_combined
+)
+
 
 def main():
     """
     Función principal para cargar un modelo entrenado,
     generar predicciones y ejecutar el backtest.
     """
-    
     # --- 1. Configuración del Backtest ---
-    
-    # Cambia este nombre por el modelo 
+    # Cambia este nombre por el modelo
     MODEL_NAME = "MLP_capas2_unidades200_relu"
     MODEL_STAGE = "latest"
-    
+
     print(f"Iniciando backtest para el modelo: {MODEL_NAME} (stage: {MODEL_STAGE})")
 
     INITIAL_CASH = 1_000_000
@@ -38,14 +42,14 @@ def main():
     except Exception as e:
         print(f"Error al cargar el modelo de MLflow: {e}")
         return
-        
+
     print(model.summary())
 
     # --- 4. Preparar Datos para Predicción ---
     columnas_excluir = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'fwd_ret', 'target']
     sample_cols = train_data.columns
     columnas_features = [col for col in sample_cols if col not in columnas_excluir]
-    
+
     print(f"Preparando {len(columnas_features)} features para predicción...")
     x_train = train_data[columnas_features]
     x_test = test_data[columnas_features]
@@ -126,14 +130,13 @@ def main():
         print("  Métricas de Rendimiento:")
         print(metrics_df.to_string(float_format="%.4f"))
 
-    # ... (El resto del script, incluyendo el gráfico, sigue igual) ...
-    plt.figure(figsize=(12, 6))
-    port_test.plot(title=f'Valor del Portafolio (Test) - Modelo {MODEL_NAME}')
-    plt.ylabel('Valor del Portafolio ($)')
-    plt.xlabel('Fecha')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+    # --- 8. Generar Gráficas ---
+    print("\nGenerando gráficas del portafolio...")
+
+    plot_portfolio_train(port_train, MODEL_NAME)
+    plot_portfolio_test(port_test, MODEL_NAME)
+    plot_portfolio_validation(port_val, MODEL_NAME)
+    plot_portfolio_combined(port_train, port_test, port_val, MODEL_NAME)
 
 
 if __name__ == "__main__":
