@@ -4,11 +4,11 @@ import pandas as pd
 from extras import Operation, portfolio_value
 
 
-def backtest(data: pd.DataFrame, 
-             cash: float, 
-             stop_loss: float, 
-             take_profit: float, 
-             n_shares: int = 1000) -> tuple[pd.Series, float, float]:
+def backtest(data: pd.DataFrame,
+             cash: float,
+             stop_loss: float,
+             take_profit: float,
+             n_shares: int = 1000) -> tuple[pd.Series, float, float, int]:
     """
     Ejecuta un backtest basado en señales de trading pre-generadas.
     """
@@ -18,8 +18,8 @@ def backtest(data: pd.DataFrame,
     if 'Date' in data.columns:
         data['Datetime'] = pd.to_datetime(data['Date'])
         data.set_index('Datetime', inplace=True)
-    
-    data.dropna(inplace=True) 
+
+    data.dropna(inplace=True)
 
     # --- Definición de constantes de trading ---
     COM = 0.125 / 100
@@ -30,26 +30,26 @@ def backtest(data: pd.DataFrame,
     # --- Inicialización de variables de simulación ---
     active_long: list[Operation] = []
     active_short: list[Operation] = []
-    
+
     portfolio_hist = [cash]
     n_operations = 0
     wins = 0
 
     # --- Iteración sobre cada fila del histórico ---
-    for row in data.itertuples(index=True): 
-        
+    for row in data.itertuples(index=True):
+
         current_price = row.Close
         current_time = row.Index
 
         # --- Cierre de posiciones LONG ---
         for position in active_long.copy():
             if (position.stop_loss > current_price) or (position.take_profit < current_price):
-                
+
                 pnl = (current_price - position.price) * position.n_shares * (1 - COM)
                 if pnl > 0:
                     wins += 1
                 n_operations += 1
-                
+
                 cash += current_price * position.n_shares * (1 - COM)
                 active_long.remove(position)
 
@@ -61,7 +61,7 @@ def backtest(data: pd.DataFrame,
         # --- Cierre de posiciones SHORT ---
         for position in active_short.copy():
             if (position.stop_loss < current_price) or (position.take_profit > current_price):
-                
+
                 pnl = (position.price - current_price) * position.n_shares
                 if pnl > 0:
                     wins += 1
@@ -71,7 +71,7 @@ def backtest(data: pd.DataFrame,
                 cash += pnl - com_cost
                 active_short.remove(position)
 
-        
+
         # --- Apertura de nuevas posiciones LONG (Señal 1) ---
         if row.signal == 1:
             cost = current_price * n_shares * (1 + COM)
@@ -109,7 +109,7 @@ def backtest(data: pd.DataFrame,
 
     # --- Limpieza de posiciones abiertas al final del backtest ---
     last_price = data['Close'].iloc[-1]
-    
+
     for position in active_long.copy():
         pnl = (last_price - position.price) * position.n_shares * (1 - COM)
         if pnl > 0: wins += 1
@@ -128,7 +128,7 @@ def backtest(data: pd.DataFrame,
 
     # --- Cálculo de métricas de rendimiento ---
     win_rate = wins / n_operations if n_operations > 0 else 0
-    
+
     port_value = pd.Series(portfolio_hist)
     if len(port_value) == len(data.index) + 1:
         port_value.index = [data.index[0] - pd.Timedelta(days=1)] + list(data.index)
@@ -136,4 +136,4 @@ def backtest(data: pd.DataFrame,
         port_value = pd.Series(portfolio_hist)
 
 
-    return port_value, cash, win_rate
+    return port_value, cash, win_rate, n_operations

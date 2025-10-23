@@ -73,47 +73,60 @@ def main():
     test_data["signal"] = class_test - 1
     val_data["signal"] = class_val - 1
 
-    print("Distribución de señales (Test):")
-    print(test_data["signal"].value_counts(normalize=True))
+    print("\n--- Distribución de Señales (Predicción) ---")
+
+    for name, df in [("TRAIN", train_data), ("TEST", test_data), ("VALIDATION", val_data)]:
+        print(f"\n{name} Set:")
+        signal_counts = df["signal"].value_counts()
+        total_signals = len(df)
+
+        # Obtener conteos
+        longs = signal_counts.get(1, 0)
+        shorts = signal_counts.get(-1, 0)
+        holds = signal_counts.get(0, 0)
+
+        print(f"  Holds (0): \t{holds:d} \t({(holds / total_signals):.2%})")
+        print(f"  Longs (1): \t{longs:d} \t({(longs / total_signals):.2%})")
+        print(f"  Shorts (-1):\t{shorts:d} \t({(shorts / total_signals):.2%})")
 
     # --- 6. Ejecutar Backtest ---
     print("\n--- Iniciando Backtest (Train) ---")
-    port_train, cash_train, wr_train = backtest(
+    port_train, cash_train, wr_train, trades_train = backtest(
         train_data.copy(), INITIAL_CASH, STOP_LOSS, TAKE_PROFIT, N_SHARES
     )
-    
+
     print("\n--- Iniciando Backtest (Test) ---")
-    port_test, cash_test, wr_test = backtest(
+    port_test, cash_test, wr_test, trades_test = backtest(
         test_data.copy(), INITIAL_CASH, STOP_LOSS, TAKE_PROFIT, N_SHARES
     )
-    
+
     print("\n--- Iniciando Backtest (Validation) ---")
-    port_val, cash_val, wr_val = backtest(
+    port_val, cash_val, wr_val, trades_val = backtest(
         val_data.copy(), INITIAL_CASH, STOP_LOSS, TAKE_PROFIT, N_SHARES
     )
 
     # --- 7. Mostrar Resultados ---
     print(f"\n--- RESULTADOS DEL BACKTEST (Modelo: {MODEL_NAME}) ---")
-    
+
     results_data = {
-        "TRAIN": (cash_train, wr_train, port_train),
-        "TEST": (cash_test, wr_test, port_test),
-        "VALIDATION": (cash_val, wr_val, port_val)
+        "TRAIN": (cash_train, wr_train, port_train, trades_train),
+        "TEST": (cash_test, wr_test, port_test, trades_test),
+        "VALIDATION": (cash_val, wr_val, port_val, trades_val)
     }
 
-    for name, (cash, win_rate, portfolio) in results_data.items():
+    for name, (cash, win_rate, portfolio, n_trades) in results_data.items():
         print(f"\nResultados: {name}")
         print(f"  Capital Inicial: ${INITIAL_CASH:,.2f}")
         print(f"  Capital Final:   ${cash:,.2f}")
         print(f"  Retorno Total:   {((cash / INITIAL_CASH) - 1):.2%}")
+        print(f"  Total Trades:    {n_trades}")
         print(f"  Win Rate:        {win_rate:.2%}")
-        
-        # Calcular y mostrar métricas avanzadas
+
         metrics_df = all_metrics(portfolio)
         print("  Métricas de Rendimiento:")
         print(metrics_df.to_string(float_format="%.4f"))
 
-    # Graficar el portafolio de Test
+    # ... (El resto del script, incluyendo el gráfico, sigue igual) ...
     plt.figure(figsize=(12, 6))
     port_test.plot(title=f'Valor del Portafolio (Test) - Modelo {MODEL_NAME}')
     plt.ylabel('Valor del Portafolio ($)')
