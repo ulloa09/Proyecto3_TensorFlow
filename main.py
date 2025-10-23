@@ -27,7 +27,7 @@ test_scaled.to_csv("data/test_scaled.csv", index=False)
 val_scaled.to_csv("data/val_scaled.csv", index=False)
 
 print("Flujo completado ✅, datos listos para pasar a modelo")
-print(f"Tamaños de dfs escalados (deben coincidir con la división inicial)\ntrain:{train_scaled.shape, train_scaled.shape == train_df.shape}\ntest:{test_scaled.shape, test_scaled.shape == test_df.shape }\nvalidation:{val_scaled.shape, val_scaled.shape == validation_df.shape}")
+print(f"Tamaños de dfs escalados \ntrain:{train_scaled.shape, train_scaled.shape == train_df.shape}\ntest:{test_scaled.shape, test_scaled.shape == test_df.shape }\nvalidation:{val_scaled.shape, val_scaled.shape == validation_df.shape}")
 
 print(train_scaled)
 print(val_scaled)
