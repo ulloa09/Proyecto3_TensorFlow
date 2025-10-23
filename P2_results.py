@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from backtest import backtest
+from P2_backtest import backtest
 
 def show_results(train_df, test_df, validation_df, params, plot: bool = True):
     """
@@ -20,11 +20,12 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
 
     def run_and_align(df):
         _, value, _ = backtest(trial=None, data=df, params=params)
+        
         # Construir índice temporal
         if 'timestamp' in df.columns:
             idx = pd.to_datetime(df['timestamp'], unit='ms', errors='coerce')
-        elif 'Datetime' in df.columns:
-            idx = pd.to_datetime(df['Datetime'], errors='coerce')
+        elif 'Date' in df.columns:
+            idx = pd.to_datetime(df['Date'], errors='coerce')
         else:
             idx = pd.to_datetime(df.index, errors='coerce')
 
@@ -32,13 +33,12 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
         v = value.copy()
 
         # Alinear longitudes
-        if len(v) == len(df) + 1:
-            v = v.iloc[1:]
-        if len(v) != len(idx):
-            min_len = min(len(v), len(idx))
-            v = v.iloc[-min_len:]
-            idx = idx.iloc[-min_len:]
-
+        # La longitud de 'value' ahora puede ser +1 o +2 (si se cerró al final)
+        if len(v) > len(idx):
+            v = v.iloc[-len(idx):] # Tomar solo los últimos N elementos
+        elif len(v) < len(idx):
+            idx = idx.iloc[-len(v):] # Tomar solo los últimos N elementos
+        
         v.index = idx
         v.name = 'value'
         return v
