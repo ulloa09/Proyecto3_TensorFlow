@@ -1,73 +1,155 @@
 import numpy as np
-import optuna
-from sklearn.model_selection import TimeSeriesSplit
-from backtest import backtest
 import pandas as pd
+import mlflow
+import mlflow.tensorflow
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Conv1D, MaxPooling1D, Flatten, Input
+from tensorflow.keras.callbacks import EarlyStopping
+
 
 # --- Propósito general ---
-# Este archivo implementa la función objetivo para la optimización de parámetros
-# mediante Optuna, utilizando validación cruzada temporal (walk-forward analysis).
-# La función evalúa parámetros en diferentes segmentos temporales y devuelve el promedio
-# del Calmar ratio obtenido, permitiendo seleccionar los parámetros óptimos para el backtest.
+# Ahora define, entrena y registra los modelos de Deep Learning (MLP y CNN) usando MLflow.
 
-def walk_forward_objective(trial, data: pd.DataFrame, n_splits: int) -> float:
+def construir_arquitectura_cnn(forma_entrada, config_modelo):
     """
-    Función objetivo para Optuna con validación cruzada temporal (walk-forward analysis).
-    Evalúa los parámetros propuestos en varios segmentos de tiempo
-    y devuelve el promedio del Calmar ratio obtenido.
-
-    Args:
-        trial: objeto Optuna que genera los parámetros.
-        data: DataFrame con los datos históricos.
-        n_splits: número de divisiones temporales para la validación cruzada.
-
-    Returns:
-        float: promedio del Calmar ratio en todos los splits.
+    Construye un modelo CNN (Red Neuronal Convolucional) 1D.
     """
+    modelo = Sequential()
+    modelo.add(Input(shape=(forma_entrada, 1)))
+    
+    num_filtros = config_modelo.get("filtros", 32)
+    capas_conv = config_modelo.get("capas_conv", 2)
+    activacion = config_modelo.get("activacion", "relu")
+    
+    for _ in range(capas_conv):
+        modelo.add(Conv1D(filters=num_filtros, kernel_size=3, activation=activacion))
+        modelo.add(MaxPooling1D(pool_size=2))
+        num_filtros *= 2  # Duplicar filtros en la siguiente capa
 
-    # --- Definición de parámetros a optimizar ---
-    # Aquí se definen los parámetros que Optuna buscará optimizar.
-    # Cada parámetro es sugerido dentro de un rango específico,
-    # siguiendo la configuración esperada para el backtest.
-    params = {
-        'stop_loss': trial.suggest_float('stop_loss', 0.02, 0.05),
-        'take_profit': trial.suggest_float('take_profit', 0.04, 0.15),
-        'rsi_window': trial.suggest_int('rsi_window', 10, 30),
-        'rsi_lower': trial.suggest_int('rsi_lower', 25, 35),
-        'rsi_upper': trial.suggest_int('rsi_upper', 65, 75),
-        'macd_fast': trial.suggest_int('macd_fast', 5, 12),
-        'macd_slow': trial.suggest_int('macd_slow', 20, 40),
-        'macd_signal': trial.suggest_int('macd_signal', 9, 18),
-        'bb_window': trial.suggest_int('bb_window', 20, 50),
-        'bb_std': trial.suggest_int('bb_std', 1, 3),
-        'obv_window': trial.suggest_int('obv_window', 20, 50),
-        'atr_window': trial.suggest_int('atr_window', 10, 30),
-        'atr_mult': trial.suggest_float('atr_mult', 1, 2.5),
-        'adx_window': trial.suggest_int('adx_window', 10, 30),
-        'adx_tresh': trial.suggest_int('adx_tresh', 20, 30),
-        'n_shares': trial.suggest_float('n_shares', 0.5, 5),
-    }
+    modelo.add(Flatten())
+    modelo.add(Dense(config_modelo.get("unidades_densas", 64), activation=activacion))
+    modelo.add(Dropout(0.3))
+    modelo.add(Dense(3, activation='softmax')) # 3 clases: -1, 0, 1 (mapeado a 0, 1, 2)
 
-    # --- Configuración de la validación cruzada temporal ---
-    # Se utiliza TimeSeriesSplit para dividir los datos en n_splits segmentos
-    # manteniendo el orden temporal, lo que es crucial para evitar fugas de información
-    # en series temporales.
-    tscv = TimeSeriesSplit(n_splits=n_splits)
-    scores = []
+    modelo.compile(optimizer=config_modelo.get("optimizador", "adam"),
+                   loss='sparse_categorical_crossentropy',
+                   metrics=['accuracy'])
+    return modelo
 
-    # --- Evaluación de cada split temporal ---
-    # Para cada segmento de prueba generado por TimeSeriesSplit,
-    # se ejecuta el backtest con los parámetros actuales y se calcula el Calmar ratio.
-    for _, test_idx in tscv.split(data):
-        test_data = data.iloc[test_idx].reset_index(drop=True)
 
-        # Ejecuta tu backtest con los parámetros del trial actual
-        calmar, _, _ = backtest(trial=None, data=test_data, params=params)
+def construir_arquitectura_mlp(forma_entrada, config_modelo):
+    """
+    Construye un modelo MLP (Perceptrón Multicapa).
+    """
+    modelo = Sequential()
+    modelo.add(Input(shape=(forma_entrada,)))
 
-        # Guarda la métrica Calmar obtenida en este split
-        scores.append(calmar)
+    capas_densas = config_modelo.get("capas_densas", 2)
+    unidades = config_modelo.get("unidades_densas", 64)
+    activacion = config_modelo.get("activacion", "relu")
 
-    # --- Resultado final ---
-    # Se devuelve el promedio del Calmar ratio obtenido en todos los splits,
-    # representando el desempeño medio esperado con los parámetros actuales.
-    return float(np.mean(scores))
+    for _ in range(capas_densas):
+        modelo.add(Dense(unidades, activation=activacion))
+        modelo.add(Dropout(0.3))
+
+    modelo.add(Dense(3, activation='softmax')) # 3 clases: -1, 0, 1 (mapeado a 0, 1, 2)
+
+    modelo.compile(optimizer=config_modelo.get("optimizador", "adam"),
+                   loss='sparse_categorical_crossentropy',
+                   metrics=['accuracy'])
+    return modelo
+
+
+def iniciar_entrenamiento_modelos(df_entrenamiento, df_validacion):
+    """
+    Función principal para entrenar y registrar los modelos MLP y CNN.
+    """
+    print("Iniciando proceso de entrenamiento de modelos DL...")
+    
+    # --- 1. Preparar Datos ---
+    # Los datos ya vienen escalados, solo separamos X (features) de y (target)
+    
+    # Excluimos columnas que no son features
+    columnas_excluir = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'fwd_ret', 'target']
+    # Nos aseguramos de solo tomar columnas que sí existen en el df
+    columnas_features = [col for col in df_entrenamiento.columns if col not in columnas_excluir]
+    
+    print(f"Se usarán {len(columnas_features)} features para el entrenamiento.")
+    
+    x_train = df_entrenamiento[columnas_features]
+    x_val = df_validacion[columnas_features]
+    
+    # Mapeamos 'target' de (-1, 0, 1) a (0, 1, 2) para Keras
+    y_train = df_entrenamiento['target'] + 1
+    y_val = df_validacion['target'] + 1
+
+    # --- 2. Definir Configuraciones ---
+    configuraciones_mlp = [
+        {"capas_densas": 2, "unidades_densas": 128, "activacion": "relu", "optimizador": "adam"},
+        {"capas_densas": 3, "unidades_densas": 64, "activacion": "relu", "optimizador": "adam"},
+    ]
+    
+    configuraciones_cnn = [
+        {"capas_conv": 2, "filtros": 32, "activacion": "relu", "unidades_densas": 64, "optimizador": "adam"},
+        {"capas_conv": 3, "filtros": 32, "activacion": "tanh", "unidades_densas": 64, "optimizador": "adam"},
+    ]
+
+    callback_parada = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+    # --- 3. Entrenar Modelos MLP ---
+    print("\n--- Entrenando Modelos MLP ---")
+    forma_entrada_mlp = x_train.shape[1]
+    
+    for config in configuraciones_mlp:
+        nombre_run = f"MLP_capas{config['capas_densas']}_unidades{config['unidades_densas']}_{config['activacion']}"
+        with mlflow.start_run(run_name=nombre_run):
+            print(f"Entrenando: {nombre_run}")
+            mlflow.log_params(config)
+            mlflow.set_tag("tipo_modelo", "MLP")
+
+            modelo_mlp = construir_arquitectura_mlp(forma_entrada_mlp, config)
+            
+            modelo_mlp.fit(
+                x_train, y_train,
+                validation_data=(x_val, y_val),
+                epochs=100, # Aumentado de 2 a 100, pero con EarlyStopping
+                batch_size=32,
+                callbacks=[callback_parada, mlflow.tensorflow.MLflowCallback()],
+                verbose=2
+            )
+            # MLflow guardará el modelo automáticamente gracias al autologging (si está activo) o al callback
+
+    # --- 4. Entrenar Modelos CNN ---
+    print("\n--- Entrenando Modelos CNN ---")
+    # CNN requiere una entrada 3D: (muestras, timesteps, features)
+    # Aquí asumimos que cada fila es un timestep (timesteps=1) o que reformateamos
+    # Para CNN 1D, necesita (muestras, features, 1) o (muestras, timesteps, features)
+    
+    x_train_cnn = np.expand_dims(x_train.values, axis=-1)
+    x_val_cnn = np.expand_dims(x_val.values, axis=-1)
+    forma_entrada_cnn = x_train_cnn.shape[1] # (num_features, 1)
+
+    for config in configuraciones_cnn:
+        nombre_run = f"CNN_capas{config['capas_conv']}_filtros{config['filtros']}_{config['activacion']}"
+        with mlflow.start_run(run_name=nombre_run):
+            print(f"Entrenando: {nombre_run}")
+            mlflow.log_params(config)
+            mlflow.set_tag("tipo_modelo", "CNN")
+            
+            modelo_cnn = construir_arquitectura_cnn(forma_entrada_cnn, config)
+            
+            modelo_cnn.fit(
+                x_train_cnn, y_train,
+                validation_data=(x_val_cnn, y_val),
+                epochs=100,
+                batch_size=32,
+                callbacks=[callback_parada, mlflow.tensorflow.MLflowCallback()],
+                verbose=2
+            )
+
+    print("\nEntrenamiento de modelos DL finalizado. Revisa MLflow UI.")
+
+if __name__ == "__main__":
+    print("Este archivo contiene las funciones de entrenamiento.")
+    print("Ejecuta el 'main.py' de entrenamiento para iniciar el proceso.")
