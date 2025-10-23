@@ -1,7 +1,7 @@
 # Función backtesting
 import numpy as np
 import pandas as pd
-from extras import Operation, portfolio_value 
+from extras import Operation, portfolio_value
 
 
 def backtest(data: pd.DataFrame, 
@@ -31,7 +31,7 @@ def backtest(data: pd.DataFrame,
     active_long: list[Operation] = []
     active_short: list[Operation] = []
     
-    portfolio_value = [cash] 
+    portfolio_hist = [cash]
     n_operations = 0
     wins = 0
 
@@ -105,7 +105,7 @@ def backtest(data: pd.DataFrame,
             cash, active_long, active_short,
             current_price, n_shares
         )
-        portfolio_value.append(current_port_value)
+        portfolio_hist.append(current_port_value)
 
     # --- Limpieza de posiciones abiertas al final del backtest ---
     last_price = data['Close'].iloc[-1]
@@ -129,11 +129,11 @@ def backtest(data: pd.DataFrame,
     # --- Cálculo de métricas de rendimiento ---
     win_rate = wins / n_operations if n_operations > 0 else 0
     
-    port_value = pd.Series(portfolio_value)
+    port_value = pd.Series(portfolio_hist)
     if len(port_value) == len(data.index) + 1:
         port_value.index = [data.index[0] - pd.Timedelta(days=1)] + list(data.index)
     else:
-        port_value = pd.Series(portfolio_value)
+        port_value = pd.Series(portfolio_hist)
 
 
     return port_value, cash, win_rate
