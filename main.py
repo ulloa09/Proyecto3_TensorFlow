@@ -14,7 +14,7 @@ def main():
     # --- 1. Configuración del Backtest ---
     
     # Cambia este nombre por el modelo 
-    MODEL_NAME = "CNN_capas3_filtros64_relu" 
+    MODEL_NAME = "MLP_capas2_unidades200_relu"
     MODEL_STAGE = "latest"
     
     print(f"Iniciando backtest para el modelo: {MODEL_NAME} (stage: {MODEL_STAGE})")
