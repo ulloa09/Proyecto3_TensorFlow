@@ -9,7 +9,9 @@ datos = fechas(datos)
 datos = generate_features(datos)
 datos = generate_targets(datos, horizon=1, lower_q=0.2, upper_q=0.8)
 
-train_df, test_df, validation_df = split_dfs(datos, train=60, test=20, validation=20)
+data = datos.copy().dropna()
+train_df, test_df, validation_df = split_dfs(data, train=60, test=20, validation=20)
+
 
 min_max_scaler, robust_scaler, standard_scaler = fit_scalers(train_df)
 print(f"Escaladores entrenados {min_max_scaler, robust_scaler, standard_scaler}\nEscaladores guardados (SE DEBE PASAR SOLO TRAIN DF)")
