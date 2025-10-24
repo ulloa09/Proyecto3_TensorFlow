@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import pandas_ta as ta
 
-
-
 def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Genera 25 features técnicas a partir de datos OHLCV.
@@ -98,42 +96,3 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     print(f"Datos NA después de Drop:\n{df.isna().sum()}")
     print(f"Total de Datos después de drop: {len(df)}")
     return df
-
-
-def make_forward_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
-    """
-    Agrega 'fwd_ret' = Close.shift(-horizon)/Close - 1 y recorta las últimas 'horizon' filas.
-    """
-    df = df.copy()
-    df["fwd_ret"] = df["Close"].shift(-horizon) / df["Close"] - 1
-    if horizon > 0:
-        df = df.iloc[:-horizon]
-    return df
-
-def compute_thresholds(ref_df: pd.DataFrame, lower_q: float, upper_q: float) -> tuple[float, float]:
-    ref_df = ref_df.copy()
-    """
-    Calcula umbrales (lower_thr, upper_thr) a partir de ref_df['fwd_ret'] (ignora NaN).
-    """
-    if "fwd_ret" not in ref_df.columns:
-        raise KeyError("compute_thresholds requiere la columna 'fwd_ret' en ref_df.")
-    upper_thr = ref_df["fwd_ret"].quantile(upper_q)
-    lower_thr = ref_df["fwd_ret"].quantile(lower_q)
-    return lower_thr, upper_thr
-
-def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) -> pd.DataFrame:
-    """
-    Etiqueta -1/0/1 usando umbrales fijos (sin recalcular percentiles).
-    """
-    df = df.copy()
-    if "fwd_ret" not in df.columns:
-        raise KeyError("label_by_thresholds requiere la columna 'fwd_ret' en df.")
-    df["target"] = 0
-    df.loc[df["fwd_ret"] > upper_thr, "target"] = 1
-    df.loc[df["fwd_ret"] < lower_thr, "target"] = -1
-
-    print(f"Etiquetas generadas: {len(df)} \n"
-          f"Total por clase:{np.round(df.target.value_counts() / len(df),5)} \n")
-    return df
-
-

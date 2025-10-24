@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import ta
 
-from signals import rsi_signals, macd_signals, bbands_signals, obv_signals, atr_breakout_signals, adx_signals
+from functions import rsi_signals, macd_signals, bbands_signals, obv_signals, atr_breakout_signals, adx_signals
 from metrics import annualized_sharpe, annualized_calmar, annualized_sortino, win_rate
 from models import Operation, get_portfolio_value
 
