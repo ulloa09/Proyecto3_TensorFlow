@@ -31,13 +31,17 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
 
     cash = 1_000_000
 
-    '''
     
     # Listas para mantener las posiciones abiertas de tipo LONG y SHORT.
     active_long_positions: list[Operation] = []
     active_short_positions: list[Operation] = []
+
     # Lista para almacenar el valor total del portafolio en cada paso.
     portfolio_value = [cash]
+
+    # Listas para almacenar operaciones ganadas y perdidas
+    won = 0
+    lost = 0
 
     # --- Iteración sobre cada fila del histórico para simular operaciones ---
     for row in historic.itertuples(index=False):
@@ -47,8 +51,17 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
         # Se añade el valor de cierre a cash descontando la comisión.
         for position in active_long_positions[:]: # Iterate over a copy of the list
             if position.stop_loss > row.Close  or position.take_profit < row.Close:
+                # Calcular PNL previo al cierre
+                fee = (position.price + row.Close) * position.n_shares * COM
+                pnl = ((row.Close - position.price) * position.n_shares) - fee
                 # Close the position
                 cash += row.Close * position.n_shares * (1 - COM)
+                # Checar si se ganó o se perdió
+                if pnl > 0:
+                    won += 1
+                else:
+                    lost += 1
+                    portfolio_value.append(pnl)
                 # Remove the position from active positions
                 active_long_positions.remove(position)
 
