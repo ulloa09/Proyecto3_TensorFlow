@@ -1,5 +1,5 @@
 import pandas as pd
-from Split import split_dfs
+from split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from functions import make_forward_return, compute_thresholds, label_by_thresholds, prepare_xy, compute_class_weights
 from features import generate_features
@@ -39,8 +39,6 @@ val_scaled.to_csv("data/val_scaled.csv", index=False)
 
 print(f"Tamaños de dfs escalados \ntrain:{train_scaled.shape, train_scaled.shape == train_df.shape}\ntest:{test_scaled.shape, test_scaled.shape == test_df.shape }\nvalidation:{val_scaled.shape, val_scaled.shape == validation_df.shape}")
 
-print(train_scaled)
-print(val_scaled)
 
 # Separación en x, y para train, test y validation
 X_train, X_val, X_test, y_train, y_val, y_test, feature_cols = prepare_xy(train_scaled, val_scaled, test_scaled)
