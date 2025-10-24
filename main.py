@@ -21,18 +21,18 @@ data = datos.copy().dropna()
 # Split de datos
 train_df, test_df, validation_df = split_dfs(data, train=60, test=20, validation=20)
 
-
+# Creación y entrenamiento de escaladores
 min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler = fit_scalers(train_df)
 print(f"Escaladores entrenados {min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler}\nEscaladores guardados (SE DEBE PASAR SOLO TRAIN DF)")
 
-# === 5. Aplicar los escaladores a los tres conjuntos ===
+# === Aplicar los escaladores a los tres conjuntos ===
 train_scaled = apply_scalers(train_df, min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler)
 test_scaled = apply_scalers(test_df, min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler)
 val_scaled = apply_scalers(validation_df, min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler)
 
 print("\n \nEscaladores aplicados a todos los conjuntos correctamente.")
 
-# === 6. (Opcional) Guardar resultados en disco para revisión rápida ===
+# === Guardar resultados en disco para revisión rápida ===
 train_scaled.to_csv("data/train_scaled.csv", index=False)
 test_scaled.to_csv("data/test_scaled.csv", index=False)
 val_scaled.to_csv("data/val_scaled.csv", index=False)

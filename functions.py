@@ -1,7 +1,23 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import compute_class_weight
+from operation_class import Operation
 
+def get_portfolio_value(cash: float, long_ops: list[Operation], short_ops: list[Operation], current_price: float, n_shares: int)-> float:
+
+    val = cash
+
+    # Agregar posiciones largas
+    for position in long_ops:
+        pnl = current_price * position.n_shares
+        val += pnl
+
+    # Agregar posiciones cortas
+    for position in short_ops:
+        pnl = (position.price - current_price) * position.n_shares
+        val += pnl
+
+    return val
 
 def make_forward_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
