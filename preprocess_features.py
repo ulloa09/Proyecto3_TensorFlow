@@ -8,6 +8,8 @@ def fechas(df):
     return df
 
 def fit_scalers(train_df):
+    train_df = train_df.copy()
+
     """Entrena los tres escaladores con los datos de entrenamiento."""
     minmax_cols = ["rsi_14", "rsi_28", "stoch_k_14", "stoch_k_28", "williams_r_14", "bb_percent_b"]
     robust_cols = ["atr_14", "atr_28", "donchian_width", "std_20", "tr_norm"]
@@ -29,6 +31,7 @@ def fit_scalers(train_df):
 
 
 def apply_scalers(df, mm_scaler, rb_scaler, st_scaler):
+    df = df.copy()
     """Aplica los escaladores ya entrenados a un DataFrame."""
     minmax_cols = ["rsi_14", "rsi_28", "stoch_k_14", "stoch_k_28", "williams_r_14", "bb_percent_b"]
     robust_cols = ["atr_14", "atr_28", "donchian_width", "std_20", "tr_norm"]
