@@ -1,5 +1,5 @@
 import pandas as pd
-from P2_split import split_dfs
+from Split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from functions import make_forward_return, compute_thresholds, label_by_thresholds, prepare_xy, compute_class_weights
 from features import generate_features
