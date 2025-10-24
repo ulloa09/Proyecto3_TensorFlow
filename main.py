@@ -1,15 +1,23 @@
 import pandas as pd
 from P2_split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
-from signals import generate_features, generate_targets
+from signals import generate_features, make_forward_return, compute_thresholds, label_by_thresholds
 
-
+# Carga de datos
 datos = pd.read_csv('data/wynn_daily_15y.csv')
+# Creación de fechas
 datos = fechas(datos)
+# Creación de features
 datos = generate_features(datos)
-datos = generate_targets(datos, horizon=1, lower_q=0.2, upper_q=0.8)
-
+# Calcular rendimiento futuro (forward return)
+datos = make_forward_return(datos, horizon=1)
+# Definir umbrales dinámicos (percentiles)
+lower_thr, upper_thr = compute_thresholds(datos, lower_q=0.2, upper_q=0.8)
+# Asignar etiquetas
+datos = label_by_thresholds(datos, lower_thr, upper_thr)
+# Drop de NAs
 data = datos.copy().dropna()
+# Split de datos
 train_df, test_df, validation_df = split_dfs(data, train=60, test=20, validation=20)
 
 

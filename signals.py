@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pandas_ta as ta
 
@@ -99,49 +100,40 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def generate_targets(df: pd.DataFrame, horizon: int, lower_q: float, upper_q: float) -> pd.DataFrame:
+def make_forward_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
-    Genera la variable objetivo (target) para señales de trading.
-    Las etiquetas se basan en el rendimiento futuro del precio de cierre.
-
-    Parámetros
-    ----------
-    df : pd.DataFrame
-        DataFrame con columna 'Close'.
-    horizon : int, opcional
-        Número de días hacia adelante para calcular el rendimiento futuro.
-    lower_q : float, opcional
-        Percentil inferior para definir la frontera de señal short (-1).
-    upper_q : float, opcional
-        Percentil superior para definir la frontera de señal long (1).
-
-    Retorna
-    -------
-    pd.DataFrame
-        DataFrame con columnas adicionales:
-        - 'fwd_ret': rendimiento futuro
-        - 'target': señal (-1, 0, 1)
+    Agrega 'fwd_ret' = Close.shift(-horizon)/Close - 1 y recorta las últimas 'horizon' filas.
     """
-
     df = df.copy()
-
-    # 1. Calcular rendimiento futuro (forward return)
     df["fwd_ret"] = df["Close"].shift(-horizon) / df["Close"] - 1
+    if horizon > 0:
+        df = df.iloc[:-horizon]
+    return df
 
-    # 2. Definir umbrales dinámicos (percentiles)
-    upper_thr = df["fwd_ret"].quantile(upper_q)
-    lower_thr = df["fwd_ret"].quantile(lower_q)
+def compute_thresholds(ref_df: pd.DataFrame, lower_q: float, upper_q: float) -> tuple[float, float]:
+    ref_df = ref_df.copy()
+    """
+    Calcula umbrales (lower_thr, upper_thr) a partir de ref_df['fwd_ret'] (ignora NaN).
+    """
+    if "fwd_ret" not in ref_df.columns:
+        raise KeyError("compute_thresholds requiere la columna 'fwd_ret' en ref_df.")
+    upper_thr = ref_df["fwd_ret"].quantile(upper_q)
+    lower_thr = ref_df["fwd_ret"].quantile(lower_q)
+    return lower_thr, upper_thr
 
-    # 3. Asignar etiquetas
+def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) -> pd.DataFrame:
+    """
+    Etiqueta -1/0/1 usando umbrales fijos (sin recalcular percentiles).
+    """
+    df = df.copy()
+    if "fwd_ret" not in df.columns:
+        raise KeyError("label_by_thresholds requiere la columna 'fwd_ret' en df.")
     df["target"] = 0
     df.loc[df["fwd_ret"] > upper_thr, "target"] = 1
     df.loc[df["fwd_ret"] < lower_thr, "target"] = -1
 
-    # 4. Eliminar los últimos 'horizon' registros sin datos futuros
-    df = df.iloc[:-horizon]
-
-    # 5. Mostrar resumen para control
-    print(f"Targets generados con horizon={horizon}, umbrales=({lower_thr:.5f}, {upper_thr:.5f})")
-    print(df["target"].value_counts(normalize=True))
-
+    print(f"Etiquetas generadas: {len(df)} \n"
+          f"Total por clase:{np.round(df.target.value_counts() / len(df),5)} \n")
     return df
+
+
