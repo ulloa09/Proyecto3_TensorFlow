@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/352730380126973554/60a5407673c045e29e4f4f05805ddaa4/artifacts
+end_time: 1761264078633
+entry_point_name: ''
+experiment_id: '352730380126973554'
+lifecycle_stage: active
+run_id: 60a5407673c045e29e4f4f05805ddaa4
+run_name: CNN_capas3_filtros64_relu
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761264031872
+status: 3
+tags: []
+user_id: david

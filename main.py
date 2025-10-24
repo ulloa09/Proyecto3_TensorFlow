@@ -25,7 +25,7 @@ def main():
 
     INITIAL_CASH = 1_000_000
     STOP_LOSS = 0.05
-    TAKE_PROFIT = 0.15
+    TAKE_PROFIT = 0.10
     N_SHARES = 100
 
     # --- 2. Cargar Datos Escalados ---
