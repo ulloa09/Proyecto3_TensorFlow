@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import ta
 
-from metrics import annualized_sharpe, annualized_calmar, annualized_sortino, win_rate
+from metrics import annualized_sharpe, annualized_calmar, annualized_sortino, win_rate, maximum_drawdown
 from functions import get_portfolio_value
 from operation_class import Operation
 
@@ -116,6 +116,8 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                     take_profit=row.Close * (1 + TP),
                     type='LONG'
                 ))
+            if row.target == 1:
+                hold += 1
 
         # --- Apertura de nuevas posiciones SHORT ---
         # Si la señal de venta está activa y hay suficiente cash, se abre una posición SHORT.
@@ -134,7 +136,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                     take_profit = row.Close * (1 - TP),
                     type = 'SHORT'
                 ))
-            else:
+            if row.target == 1:
                 hold += 1
 
         # --- Actualización del valor del portafolio ---
@@ -186,6 +188,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     sharpe_anual = annualized_sharpe(mean=mean_t, std=std_t)
     calmar = annualized_calmar(mean=mean_t, values=values_port)
     sortino = annualized_sortino(mean_t, df['rets'])
+    max_drawdown = maximum_drawdown(values_port)
 
     # - Win Rate
     win_rate = won / (won+lost) if (won+lost) > 0 else 0
@@ -199,6 +202,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     results['Calmar'] = calmar
     results['Sortino'] = sortino
     results['Win Rate'] = win_rate
+    results['Max Drawdown'] = max_drawdown
 
     # --- Salida de la función ---
     # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
