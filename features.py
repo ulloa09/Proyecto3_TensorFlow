@@ -86,13 +86,8 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
         print("⚠️ VWAP no pudo calcularse (devuelve None).")
         df["vwap_dev"] = None
 
-
-
-
     # Eliminar filas con Nas
     print(f"Total de Datos previo a drop: {len(df)}")
-    df = df.dropna()
-
-    print(f"Datos NA después de Drop:\n{df.isna().sum().sum()}")
-    print(f"Total de Datos después de drop: {len(df)}")
+    
+    print(f"Total de Datos después de generar features: {len(df)}")
     return df

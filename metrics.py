@@ -34,6 +34,8 @@ def annualized_calmar(mean, values) -> float:
 # ignorando las ganancias, y es base para el cálculo del Sortino ratio.
 def downside_deviation(rets) -> float:
     negative_rets = rets[rets < 0]
+    if negative_rets.empty:
+        return 0.0
     return ((negative_rets ** 2).mean()) ** 0.5
 
 # --- Calcula el Índice de Sortino anualizado ---
@@ -42,7 +44,7 @@ def downside_deviation(rets) -> float:
 def annualized_sortino(mean: float, rets) -> float:
     annual_rets = (mean * days)
     annual_std_down = downside_deviation(rets) * np.sqrt(days)
-    return annual_rets / annual_std_down if annual_rets > 0 else 0
+    return annual_rets / annual_std_down if annual_std_down > 0 else 0
 
 # --- Calcula la tasa de aciertos (win rate) ---
 # Proporción de retornos positivos respecto al total de operaciones,
