@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv1D, MaxPooling1D, Flatten, Input
 
 def build_cnn_model(input_shape, params):
-    """Construye un modelo CNN con Tanh"""
+    """Construye un modelo CNN con Tanh (sin Dropout)"""
     model = Sequential()
     model.add(Input(shape=(input_shape, 1)))
     
@@ -19,8 +19,12 @@ def build_cnn_model(input_shape, params):
     dense_units = params.get("dense_units", 64)
     model.add(Flatten())
     model.add(Dense(dense_units, activation=activation))
+    
     model.add(Dense(3, activation='softmax')) # 3 clases (0, 1, 2)
     
-    optimizer = "adam"
-    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+    # Mantenemos el clipvalue, que es buena práctica
+    optimizer = tf.keras.optimizers.Adam(clipvalue=1.0)
+    
+    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
     return model

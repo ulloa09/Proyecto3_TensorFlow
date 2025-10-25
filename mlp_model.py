@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 
 def build_mlp_model(input_shape, params):
-    """Construye un modelo MLP con ReLU"""
+    """Construye un modelo MLP con ReLU (sin Dropout)"""
     model = Sequential()
     model.add(Input(shape=(input_shape,)))
     
@@ -16,6 +16,9 @@ def build_mlp_model(input_shape, params):
         
     model.add(Dense(3, activation='softmax')) # 3 clases (0, 1, 2)
     
-    optimizer = "adam"
-    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+    # Mantenemos el clipvalue
+    optimizer = tf.keras.optimizers.Adam(clipvalue=1.0)
+    
+    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    
     return model

@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import mlflow
-
-# Imports del proyecto
 from backtest import backtest 
 from metrics import * 
 from graphs import ( 
@@ -12,6 +10,7 @@ from graphs import (
     plot_portfolio_combined
 )
 from functions import prepare_xy 
+from drift_analisis import find_rolling_drift_breakpoint
 
 def main():
     """
@@ -19,7 +18,7 @@ def main():
     generar predicciones y ejecutar el backtest.
     """
     # --- 1. Configuración del Backtest ---
-    MODEL_NAME = "MLP_layers2_units200_relu_Weighted"
+    MODEL_NAME = "CNN_conv4_filters16_dense50_relu_Weighted"
     # MODEL_NAME = "MLP_layers2_units200_relu_Weighted"
     MODEL_STAGE = "latest"
 
@@ -29,7 +28,7 @@ def main():
     STOP_LOSS = 0.05
     TAKE_PROFIT = 0.15
     N_SHARES = 100
-    INITIAL_CASH = 1_000_000 # usa 1M por defecto
+    INITIAL_CASH = 1_000_000 
 
     # --- 2. Cargar Datos Escalados ---
     print("Cargando datos escalados...")
@@ -38,10 +37,14 @@ def main():
         test_data = pd.read_csv("data/test_scaled.csv")
         val_data = pd.read_csv("data/val_scaled.csv")
         
-        # Asegurar que 'Datetime' exista
+        # Asegurar que 'Datetime' (usado por el backtest y drift) exista
         for df in [train_data, test_data, val_data]:
              if 'Date' in df.columns:
+                  # Convertir a Datetime y poner como índice para el análisis
                   df['Datetime'] = pd.to_datetime(df['Date'])
+                  df = df.set_index('Datetime', drop=False)
+             else:
+                 print("Advertencia: No se encontró 'Date', el drift rodante puede fallar.")
     except FileNotFoundError:
          print("Error: Archivos escalados no encontrados. Ejecuta train_models.py primero.")
          return
@@ -62,8 +65,8 @@ def main():
 
 
     # --- 4. Preparar Datos para Predicción ---
-    # Usar prepare_xy para obtener la lista de features consistentemente
     try:
+        # Usamos prepare_xy para obtener la lista de features consistentemente
         X_train_np, X_val_np, X_test_np, _, _, _, feature_cols = prepare_xy(
             train_data, val_data, test_data
         )
@@ -109,7 +112,26 @@ def main():
         print(f"  Longs (2): \t{signal_counts.get(2, 0):.2%}")
         print(f"  Shorts (0):\t{signal_counts.get(0, 0):.2%}")
 
-    # --- 6. Ejecutar Backtest ---
+
+    # --- 6. EJECUTAR ANÁLISIS DE DRIFT RODANTE (NUEVO) ---
+    print("\n--- Iniciando Análisis de Punto de Quiebre (Drift Rodante) ---")
+    
+    # Asegurar que los DFs tengan índice Datetime para el análisis
+    train_data_drift = train_data.set_index('Datetime')
+    test_data_drift = test_data.set_index('Datetime')
+    val_data_drift = val_data.set_index('Datetime')
+
+    test_break_date = find_rolling_drift_breakpoint(
+        train_data_drift, test_data_drift, feature_cols,
+        window_size=90, drift_threshold=0.20
+    )
+    
+    val_break_date = find_rolling_drift_breakpoint(
+        train_data_drift, val_data_drift, feature_cols,
+        window_size=90, drift_threshold=0.20
+    )
+
+    # --- 7. Ejecutar Backtest ---
     print("\n--- Iniciando Backtest (Train) ---")
     cash_train, port_train, wr_train, buys_train, sells_train, holds_train, trades_train, metrics_train = backtest(
         train_data.copy(), STOP_LOSS, TAKE_PROFIT, N_SHARES
@@ -123,7 +145,7 @@ def main():
         val_data.copy(), STOP_LOSS, TAKE_PROFIT, N_SHARES
     )
 
-    # --- 7. Mostrar Resultados ---
+    # --- 8. Mostrar Resultados ---
     print(f"\n--- RESULTADOS DEL BACKTEST (Modelo: {MODEL_NAME}) ---")
     results_data = {
         "TRAIN": (cash_train, wr_train, metrics_train, trades_train, buys_train, sells_train, holds_train),
@@ -147,11 +169,14 @@ def main():
             print("  Métricas de Rendimiento: No calculadas (sin trades o error).")
 
 
-    # --- 8. Generar Gráficas (Usando tus gráficas) ---
+    # --- 9. Generar Gráficas ---
     print("\nGenerando gráficas del portafolio...")
     plot_portfolio_train(port_train, MODEL_NAME)
-    plot_portfolio_test(port_test, MODEL_NAME)
-    plot_portfolio_validation(port_val, MODEL_NAME)
+    
+    # Pasar las fechas de quiebre a las gráficas
+    plot_portfolio_test(port_test, MODEL_NAME, breakpoint_date=test_break_date)
+    plot_portfolio_validation(port_val, MODEL_NAME, breakpoint_date=val_break_date)
+    
     plot_portfolio_combined(port_train, port_test, port_val, MODEL_NAME)
 
 

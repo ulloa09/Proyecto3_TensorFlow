@@ -32,23 +32,34 @@ def fit_scalers(train_df):
     mm_scaler, rb_scaler, st_scaler, ohlcv_scaler = None, None, None, None
 
     try:
-        if minmax_cols:
+        if minmax_cols and train_df[minmax_cols].notna().all().all():
             mm_scaler = MinMaxScaler().fit(train_df[minmax_cols])
             dump(mm_scaler, "scaler_minmax.pkl")
             print(f"MinMaxScaler entrenado con {len(minmax_cols)} cols.")
-        if robust_cols:
+        elif minmax_cols:
+             print(f"Advertencia: NaNs en columnas de MinMaxScaler. Omitiendo.")
+        
+        if robust_cols and train_df[robust_cols].notna().all().all():
             rb_scaler = RobustScaler().fit(train_df[robust_cols])
             dump(rb_scaler, "scaler_robust.pkl")
             print(f"RobustScaler entrenado con {len(robust_cols)} cols.")
-        if standard_cols:
+        elif robust_cols:
+             print(f"Advertencia: NaNs en columnas de RobustScaler. Omitiendo.")
+
+        if standard_cols and train_df[standard_cols].notna().all().all():
             st_scaler = StandardScaler().fit(train_df[standard_cols])
             dump(st_scaler, "scaler_standard.pkl")
             print(f"StandardScaler entrenado con {len(standard_cols)} cols.")
-        if ohlcv_cols:
+        elif standard_cols:
+             print(f"Advertencia: NaNs en columnas de StandardScaler. Omitiendo.")
+
+        if ohlcv_cols and train_df[ohlcv_cols].notna().all().all():
             ohlcv_scaler = StandardScaler().fit(train_df[ohlcv_cols])
             dump(ohlcv_scaler, "scaler_ohlcv.pkl")
             print(f"StandardScaler (OHLCV) entrenado con {len(ohlcv_cols)} cols.")
-            
+        elif ohlcv_cols:
+            print(f"Advertencia: NaNs en columnas de OHLCV_Scaler. Omitiendo.")
+
     except ValueError as e:
         print(f"Error al entrenar scalers: {e}. DataFrame podría tener NaNs o estar vacío.")
         return None, None, None, None
@@ -56,18 +67,12 @@ def fit_scalers(train_df):
     return mm_scaler, rb_scaler, st_scaler, ohlcv_scaler
 
 
-def apply_scalers(df, mm_scaler_path="scaler_minmax.pkl", rb_scaler_path="scaler_robust.pkl", st_scaler_path="scaler_standard.pkl", ohlcv_scaler_path="scaler_ohlcv.pkl"):
+def apply_scalers(df, mm_scaler, rb_scaler, st_scaler, ohlcv_scaler):
     df = df.copy()
     """Aplica los escaladores ya entrenados a un DataFrame."""
-    
-    try: mm_scaler = load(mm_scaler_path)
-    except FileNotFoundError: mm_scaler = None
-    try: rb_scaler = load(rb_scaler_path)
-    except FileNotFoundError: rb_scaler = None
-    try: st_scaler = load(st_scaler_path)
-    except FileNotFoundError: st_scaler = None
-    try: ohlcv_scaler = load(ohlcv_scaler_path)
-    except FileNotFoundError: ohlcv_scaler = None
+
+    # --- ESTA ES LA VERSIÓN CORRECTA ---
+    # (Recibe objetos, no rutas de archivo)
 
     minmax_cols = ["rsi_14", "rsi_28", "stoch_k_14", "stoch_k_28", "williams_r_14", "bb_percent_b"]
     robust_cols = ["atr_14", "atr_28", "donchian_width", "std_20", "tr_norm"]

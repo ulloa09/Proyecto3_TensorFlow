@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from typing import Optional # Importar Optional
 
 def plot_portfolio_train(portfolio_series: pd.Series, model_name: str):
     """
@@ -14,12 +15,29 @@ def plot_portfolio_train(portfolio_series: pd.Series, model_name: str):
     plt.show()
 
 
-def plot_portfolio_test(portfolio_series: pd.Series, model_name: str):
+def plot_portfolio_test(
+    portfolio_series: pd.Series,
+    model_name: str,
+    breakpoint_date: Optional[pd.Timestamp] = None # Asegúrate que este argumento exista
+):
     """
     2. Grafica el comportamiento del portafolio en el periodo de TEST.
+       Incluye una línea vertical en el punto de quiebre del drift.
     """
     plt.figure(figsize=(12, 6))
     portfolio_series.plot(title=f'Valor del Portafolio (Test) - Modelo {model_name}', color='orange')
+
+    # Añadir línea vertical si breakpoint_date se proporciona
+    if breakpoint_date is not None:
+        plt.axvline(
+            x=breakpoint_date,
+            color='red',
+            linestyle='--',
+            linewidth=2,
+            label=f'Punto de Drift ({breakpoint_date.date()})'
+        )
+        plt.legend() # Mostrar la leyenda solo si hay línea
+
     plt.ylabel('Valor del Portafolio ($)')
     plt.xlabel('Fecha')
     plt.grid(True)
@@ -27,12 +45,29 @@ def plot_portfolio_test(portfolio_series: pd.Series, model_name: str):
     plt.show()
 
 
-def plot_portfolio_validation(portfolio_series: pd.Series, model_name: str):
+def plot_portfolio_validation(
+    portfolio_series: pd.Series,
+    model_name: str,
+    breakpoint_date: Optional[pd.Timestamp] = None # Asegúrate que este argumento exista
+):
     """
     3. Grafica el comportamiento del portafolio en el periodo de VALIDATION.
+       Incluye una línea vertical en el punto de quiebre del drift.
     """
     plt.figure(figsize=(12, 6))
     portfolio_series.plot(title=f'Valor del Portafolio (Validation) - Modelo {model_name}', color='lightgreen')
+
+    # Añadir línea vertical si breakpoint_date se proporciona
+    if breakpoint_date is not None:
+        plt.axvline(
+            x=breakpoint_date,
+            color='red',
+            linestyle='--',
+            linewidth=2,
+            label=f'Punto de Drift ({breakpoint_date.date()})'
+        )
+        plt.legend() # Mostrar la leyenda solo si hay línea
+
     plt.ylabel('Valor del Portafolio ($)')
     plt.xlabel('Fecha')
     plt.grid(True)
