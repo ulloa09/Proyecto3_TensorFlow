@@ -45,6 +45,12 @@ params_space = [
     {"conv_layers": 2, "conv_filters": 32, "activation": "sigmoid", "dense_units": 64},
 ]
 
+params = [
+    {"conv_layers": 2, "conv_filters": 32, "activation": "relu", "dense_units": 64},
+    {"conv_layers": 3, "conv_filters": 32, "activation": "relu", "dense_units": 32},
+    {"conv_layers": 2, "conv_filters": 32, "activation": "sigmoid", "dense_units": 64},
+]
+
 print("Training models…")
 
 for params in params_space:

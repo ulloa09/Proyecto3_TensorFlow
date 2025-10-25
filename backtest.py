@@ -8,7 +8,7 @@ from functions import get_portfolio_value
 from operation_class import Operation
 
 
-def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
+def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     # --- Preparación inicial del DataFrame ---
     # Copia el DataFrame para evitar modificar el original.
     data = data.copy()
@@ -200,7 +200,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
     results = pd.DataFrame()
-    results['Portfolio'] = df['value'].tail(1)
+    results['Portfolio'] = portfolio_value[-1]
     results['Sharpe'] = sharpe_anual
     results['Calmar'] = calmar
     results['Sortino'] = sortino

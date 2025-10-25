@@ -15,11 +15,12 @@ def build_cnn_model(params, input_shape, n_classes):
 
     # Hiperparámetros con defaults
     num_filters   = params.get("num_filters", 32)
-    kernel_size   = params.get("kernel_size", 1)   # 1 por ahora; más grande cuando metas ventanas
+    kernel_size   = params.get("kernel_size", 3)
     conv_blocks   = params.get("conv_blocks", 2)
     dense_units   = params.get("dense_units", 64)
     activation    = params.get("activation", "relu")
     dropout_rate  = params.get("dropout", 0.2)
+    optimizer_name = params.get("optimizer", "adam")
 
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Input(shape=input_shape))
@@ -47,7 +48,7 @@ def build_cnn_model(params, input_shape, n_classes):
     model.add(tf.keras.layers.Dense(n_classes, activation="softmax"))
 
     # Compilar
-    optimizer_name = params.get("optimizer", "adam")
+
     model.compile(
         optimizer=optimizer_name,
         loss="sparse_categorical_crossentropy",  # etiquetas enteras 0,1,2
@@ -102,17 +103,7 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
 
     return history, model, final_val_acc, final_val_loss
 
-def reshape_for_cnn(X):
-    """
-    Reformatea un conjunto de datos tabular (n_samples, n_features)
-    al formato requerido por una CNN1D: (n_samples, timesteps, n_features).
 
-    Por ahora cada fila se trata como una secuencia de longitud 1.
-    """
-    if isinstance(X, pd.DataFrame):
-        X = X.values
-    n_samples, n_features = X.shape
-    return X.reshape(n_samples, 1, n_features)
 
 def test_multiple_cnn_configs(params_space, X_train_seq, y_train, X_val_seq, y_val, class_weights):
     """
@@ -158,3 +149,38 @@ def test_multiple_cnn_configs(params_space, X_train_seq, y_train, X_val_seq, y_v
     print(f"Validation Accuracy: {best_acc:.4f}")
 
     return best_model, best_params, best_acc
+
+
+def reshape_cnn(X_train, X_test, X_val):
+    """
+    Da formato a los datasets para poder usarlos en una CNN 1D sin contexto temporal.
+    Agrega una dimensión ficticia de tiempo (timesteps=1).
+
+    Parámetros:
+    -----------
+    X_train, X_test, X_val : np.ndarray o pd.DataFrame
+        Conjuntos de features.
+    y_train, y_test, y_val : np.ndarray o pd.Series
+        Etiquetas correspondientes.
+
+    Retorna:
+    --------
+    X_train_r, y_train, X_test_r, y_test, X_val_r, y_val
+        Los X_* con shape (samples, 1, features)
+    """
+    # Convertir a arrays
+    X_train = np.asarray(X_train)
+    X_test = np.asarray(X_test)
+    X_val = np.asarray(X_val)
+
+    # Expandir dimensión para CNN 1D
+    X_train_r = np.expand_dims(X_train, axis=1)
+    X_test_r = np.expand_dims(X_test, axis=1)
+    X_val_r = np.expand_dims(X_val, axis=1)
+
+    # Mostrar shapes resultantes
+    print(f"✅ X_train: {X_train_r.shape}")
+    print(f"✅ X_test:  {X_test_r.shape}")
+    print(f"✅ X_val:   {X_val_r.shape}")
+
+    return X_train_r, X_test_r, X_val_r

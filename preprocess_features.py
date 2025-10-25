@@ -17,7 +17,7 @@ def fit_scalers(train_df):
                      "adx_14", "adx_28", "momentum_10", "roc_20",
                      "obv", "mfi_14", "cmf_20", "vol_sma_20", "vol_zscore_20",
                      "vwap_dev", "vol_spike_ratio", "bb_width"]
-    ohlcv_cols = ["Open", "High", "Low", "Close", "Volume"]
+    ohlcv_cols = ["Open", "High", "Low", "Close", "Volume", "Adj Close"]
 
     mm_scaler = MinMaxScaler().fit(train_df[minmax_cols])
     rb_scaler = RobustScaler().fit(train_df[robust_cols])
@@ -42,7 +42,7 @@ def apply_scalers(df, mm_scaler, rb_scaler, st_scaler, ohlcv_scaler):
                      "adx_14", "adx_28", "momentum_10", "roc_20",
                      "obv", "mfi_14", "cmf_20", "vol_sma_20", "vol_zscore_20",
                      "vwap_dev", "vol_spike_ratio", "bb_width"]
-    ohlcv_cols = ["Open", "High", "Low", "Close", "Volume"]
+    ohlcv_cols = ["Open", "High", "Low", "Close", "Volume", "Adj Close"]
 
     df[minmax_cols] = mm_scaler.transform(df[minmax_cols])
     df[robust_cols] = rb_scaler.transform(df[robust_cols])

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from backtest import backtest
-from cnn_model import reshape_for_cnn, build_cnn_model, train_cnn_model, test_multiple_cnn_configs
+from cnn_model import build_cnn_model, train_cnn_model, test_multiple_cnn_configs, reshape_cnn
 from split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from functions import make_forward_return, compute_thresholds, label_by_thresholds, prepare_xy, compute_class_weights
@@ -15,9 +15,9 @@ datos = fechas(datos)
 # Creación de features
 datos = generate_features(datos)
 # Calcular rendimiento futuro (forward return)
-datos = make_forward_return(datos, horizon=1)
+datos = make_forward_return(datos, horizon=5)
 # Definir umbrales dinámicos (percentiles)
-lower_thr, upper_thr = compute_thresholds(datos, lower_q=0.3, upper_q=0.7)
+lower_thr, upper_thr = compute_thresholds(datos, lower_q=0.15, upper_q=0.85)
 # Asignar etiquetas
 datos = label_by_thresholds(datos, lower_thr, upper_thr)
 # Drop de NAs
@@ -53,12 +53,16 @@ X_train, X_val, X_test, y_train, y_val, y_test, feature_cols = prepare_xy(train_
 # Balanceo de clases
 class_weights = compute_class_weights(y_train)
 
-# RE-formateo de X para CNN
-X_train_seq = reshape_for_cnn(X_train)
-X_test_seq  = reshape_for_cnn(X_test)
-X_val_seq   = reshape_for_cnn(X_val)
-print(f"Nuevas dimensiones para CNN: \n{X_train_seq.shape, X_test_seq.shape, X_val_seq.shape}")
+#RE-Shape para ingresar datos a CNN
+X_train_r, X_test_r, X_val_r = reshape_cnn(X_train, X_test, X_val)
+print(f"Nuevas dimensiones para CNN: \n{X_train_r.shape, X_test_r.shape, X_val_r.shape}")
 
+params = {"num_filters": 32, "kernel_size": 1, "conv_blocks": 2, "dense_units": 128, "activation": "sigmoid", "dropout": 0.2, "optimizer": "adam", "epochs": 40, "batch_size": 64}
+
+cnn_model1 = build_cnn_model(params, X_train_r.shape[1:], 3)
+cnn_model = train_cnn_model(cnn_model1, X_train_r, y_train, X_val_r, y_val, params)
+
+'''
 # Construcción del mejor modelo CNN
 params_space = [
     {"num_filters": 32, "kernel_size": 1, "conv_blocks": 2, "dense_units": 128, "activation": "sigmoid", "dropout": 0.25, "optimizer": "adam", "epochs": 40, "batch_size": 64},
@@ -68,15 +72,18 @@ params_space = [
 
 best_cnn_model, best_params, best_acc = test_multiple_cnn_configs(
     params_space=params_space,
-    X_train_seq=X_train_seq,
+    X_train_seq=X_train_r,
     y_train=y_train,
-    X_val_seq=X_test_seq,  # test actúa como validación
+    X_val_seq=X_test_r,  # test actúa como validación
     y_val=y_test,
     class_weights=class_weights
 )
 
 print(f"Mejor modelo listo para backtesting con acc={best_acc:.4f}")
+'''
 
-y_pred = np.argmax(best_cnn_model.predict(X_test_seq), axis=1)
+
+
+y_pred = np.argmax(cnn_model1.predict(X_test_r), axis=1)
 test_df["target"] = y_pred
 cash, portfolio_value, buy, sell, hold, total_ops = backtest(test_df, stop_loss=0.015, take_profit=0.2, n_shares=10)
