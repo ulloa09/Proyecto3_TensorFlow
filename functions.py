@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-# Importar directamente class_weight
 from sklearn.utils import class_weight
 
-# --- make_forward_return (Sin cambios) ---
 def make_forward_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
     Agrega 'fwd_ret' y recorta las últimas 'horizon' filas. Maneja df vacío.
@@ -49,7 +47,7 @@ def label_by_fixed_threshold(df: pd.DataFrame, alpha: float) -> pd.DataFrame:
     else: print("Distribución: N/A (DataFrame vacío)")
     return df
 
-# --- one_hot_encode (Sin cambios) ---
+# --- one_hot_encode ---
 def one_hot_encode(y, num_classes=None):
     y = np.array(y, dtype=int)
     min_y = np.min(y) if y.size > 0 else 0
@@ -63,7 +61,7 @@ def one_hot_encode(y, num_classes=None):
     if y.size > 0: one_hot[np.arange(y.size), y] = 1
     return one_hot
 
-# --- prepare_xy (Mapeo de -1,0,1 a 0,1,2 - Sin cambios) ---
+# --- prepare_xy (Mapeo de -1,0,1 a 0,1,2) ---
 def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
     """
     Prepara X (features) e y (etiquetas one-hot 0,1,2) para Keras.
@@ -85,7 +83,6 @@ def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
     y_val_orig   = val_df["target"].astype(int).to_numpy()
     y_test_orig  = test_df["target"].astype(int).to_numpy()
 
-    # Mapeo a 0, 1, 2: (-1 -> 0, 0 -> 1, 1 -> 2)
     y_train_mapped = y_train_orig + 1
     y_val_mapped   = y_val_orig + 1
     y_test_mapped  = y_test_orig + 1
@@ -101,7 +98,6 @@ def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
 
     return X_train, X_val, X_test, y_train_oh, y_val_oh, y_test_oh, feature_cols
 
-# --- compute_class_weights (Sin cambios, acepta y mapeada 0,1,2) ---
 def compute_class_weights(y_train):
     """
     Calcula pesos balanceados para las clases (0, 1, 2).
@@ -111,7 +107,6 @@ def compute_class_weights(y_train):
     else: raise ValueError("Formato de y_train no reconocido.")
     if y_train_int.size == 0: print("Advertencia: y_train vacío."); return {0: 1.0, 1: 1.0, 2: 1.0}
     unique_classes = np.unique(y_train_int)
-    # if not np.all(np.isin(unique_classes, [0, 1, 2])): print(f"Advertencia: Clases inesperadas: {unique_classes}.")
     weights = class_weight.compute_class_weight(class_weight="balanced", classes=np.array([0, 1, 2]), y=y_train_int)
     class_weights_dict = {int(c): float(w) for c, w in zip(np.array([0, 1, 2]), weights)}
     print("Pesos de clase calculados (para 0, 1, 2):")

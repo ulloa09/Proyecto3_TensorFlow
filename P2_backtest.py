@@ -18,7 +18,7 @@ def backtest(data: pd.DataFrame,
     # --- Definición de constantes de trading ---
     COM = 0.125 / 100
     BORROW_RATE_ANNUAL = 0.25 / 100
-    INTERVALS = 252 # Días de trading por año
+    INTERVALS = 252 
     BORROW_RATE_DAILY = BORROW_RATE_ANNUAL / INTERVALS # Tasa diaria
     SL = stop_loss
     TP = take_profit
@@ -44,8 +44,8 @@ def backtest(data: pd.DataFrame,
         # --- Cierre de posiciones LONG ---
         for position in active_long.copy():
             if (current_price > position.take_profit) or (current_price < position.stop_loss):
-                pnl = (current_price - position.price) * position.n_shares # PnL antes de comisión
-                cash += current_price * position.n_shares * (1 - COM) # Añadir valor de venta (con comisión)
+                pnl = (current_price - position.price) * position.n_shares
+                cash += current_price * position.n_shares * (1 - COM)
                 # Contar trade como positivo/negativo
                 if pnl * (1-COM) >= 0: # Comprobar PnL neto
                     positive_trades += 1
@@ -62,8 +62,8 @@ def backtest(data: pd.DataFrame,
         # --- Cierre de posiciones SHORT ---
         for position in active_short.copy():
             if (current_price < position.take_profit) or (current_price > position.stop_loss):
-                pnl = (position.price - current_price) * position.n_shares # PnL bruto
-                short_com = current_price * position.n_shares * COM # Comisión de cierre
+                pnl = (position.price - current_price) * position.n_shares
+                short_com = current_price * position.n_shares * COM
                 cash += pnl - short_com # Añadir PnL neto a cash
                 # Contar trade
                 if pnl - short_com >= 0:
@@ -83,12 +83,12 @@ def backtest(data: pd.DataFrame,
                 active_long.append(Operation(
                     time=current_time, price=current_price,
                     take_profit=current_price * (1 + TP), # TP para long
-                    stop_loss=current_price * (1 - SL),   # SL para long
+                    stop_loss=current_price * (1 - SL), # SL para long
                     n_shares=n_shares, type="LONG"
                 ))
         # --- Apertura de nuevas posiciones SHORT (Señal -1) ---
         elif row.signal == -1:
-            # position_value = current_price * n_shares # Valor nocional
+            # position_value = current_price * n_shares
             short_cost = current_price * n_shares * COM # Solo comisión al abrir
             if cash > short_cost: # Solo necesitamos cubrir la comisión
                 cash -= short_cost # Descontar comisión
@@ -96,7 +96,7 @@ def backtest(data: pd.DataFrame,
                 active_short.append(Operation(
                     time=current_time, price=current_price,
                     take_profit=current_price * (1 - TP), # TP para short
-                    stop_loss=current_price * (1 + SL),   # SL para short
+                    stop_loss=current_price * (1 + SL), # SL para short
                     n_shares=n_shares, type="SHORT"
                 ))
         else:
@@ -113,20 +113,20 @@ def backtest(data: pd.DataFrame,
     # --- Limpieza de posiciones abiertas al final del backtest (usando last_row) ---
     if last_row:
         last_price = last_row.Close
-        for position in active_long.copy(): # Usar .copy() al modificar
+        for position in active_long.copy():
             pnl = (last_price - position.price) * position.n_shares # PnL bruto
             cash += last_price * position.n_shares * (1 - COM)
             if pnl * (1-COM) >= 0: positive_trades += 1
             else: negative_trades += 1
-            active_long.remove(position) # Eliminar de la lista original
+            active_long.remove(position) # Eliminar de la lista
 
-        for position in active_short.copy(): # Usar .copy() al modificar
+        for position in active_short.copy():
             pnl = (position.price - last_price) * position.n_shares
             short_com = last_price * position.n_shares * COM
             cash += pnl - short_com
             if pnl - short_com >= 0: positive_trades += 1
             else: negative_trades += 1
-            active_short.remove(position) # Eliminar de la lista original
+            active_short.remove(position) # Eliminar de la lista
 
 
     # --- Cálculo de métricas finales ---
@@ -137,7 +137,7 @@ def backtest(data: pd.DataFrame,
     if not data.empty and len(port_series) == len(data.index) + 1:
          if isinstance(data.index, pd.DatetimeIndex):
               port_series.index = [data.index[0] - pd.Timedelta(days=1)] + list(data.index)
-         else: # Si no es DatetimeIndex, usar índice numérico simple para evitar error
+         else: 
               port_series = pd.Series(portfolio_hist)
     else:
          port_series = pd.Series(portfolio_hist) # Fallback a índice simple

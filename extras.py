@@ -32,9 +32,6 @@ def portfolio_value(cash: float,
     for position in short_ops:
         # El PnL de un short es el (precio_entrada - precio_actual)
         pnl = (position.price - current_price) * position.n_shares
-        # Sumamos el PnL al 'port_val'. No sumamos el 'cash' inicial
-        # porque el 'cash' ya lo tiene (o se usó para colateral).
-        # Esta es una forma simplificada de equity.
         port_val += pnl 
 
     return port_val

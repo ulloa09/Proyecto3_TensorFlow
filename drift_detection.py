@@ -57,7 +57,7 @@ def analyze_feature_drift(reference_df: pd.DataFrame,
         ks_stat, p_val = run_ks_test(reference_df[col], comparison_df[col])
 
         # Determinar si hay drift (p-value < alpha indica que las distribuciones son diferentes)
-        drift_detected = p_val < alpha if not pd.isna(p_val) else False # Considerar NaN p-value como no drift? O True?
+        drift_detected = p_val < alpha if not pd.isna(p_val) else False
 
         drift_results.append({
             'Feature': col,

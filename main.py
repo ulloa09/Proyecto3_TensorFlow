@@ -9,7 +9,6 @@ from graphs import (
     plot_portfolio_validation,
     plot_portfolio_combined
 )
-# Asegúrate que esta importación sea correcta
 from functions import prepare_xy
 
 def main():
@@ -18,7 +17,8 @@ def main():
     generar predicciones y ejecutar el backtest.
     """
     # --- 1. Configuración del Backtest ---
-    MODEL_NAME = "CNN_conv4_filters16_dense50_tanh"
+    # MODEL_NAME = "MLP_layers3_units150_relu_Weighted"
+    MODEL_NAME = "CNN_conv4_filters16_dense50_tanh_Weighted"
     MODEL_STAGE = "latest"
 
     print(f"Iniciando backtest para el modelo: {MODEL_NAME} (stage: {MODEL_STAGE})")
@@ -34,7 +34,6 @@ def main():
         train_data = pd.read_csv("data/train_scaled.csv")
         test_data = pd.read_csv("data/test_scaled.csv")
         val_data = pd.read_csv("data/val_scaled.csv")
-        # Asegurarse que Date sea Datetime si existe, para el índice del backtest
         for df in [train_data, test_data, val_data]:
              if 'Date' in df.columns:
                   df['Date'] = pd.to_datetime(df['Date'])
@@ -47,7 +46,6 @@ def main():
          return
 
     # --- 3. Cargar Modelo desde MLflow ---
-    # ... (sin cambios) ...
     print(f"Cargando modelo '{MODEL_NAME}' desde MLflow...")
     try:
         model_uri = f"models:/{MODEL_NAME}/{MODEL_STAGE}"
@@ -62,7 +60,6 @@ def main():
     # Usar prepare_xy para obtener la lista de features consistentemente
     # Pasar los DFs cargados
     try:
-        # Solo necesitamos X y feature_cols aquí, ignoramos y_oh
         X_train_np, X_val_np, X_test_np, _, _, _, feature_cols = prepare_xy(
             train_data, val_data, test_data
         )
@@ -71,6 +68,7 @@ def main():
         return
 
     print(f"Preparando {len(feature_cols)} features para predicción...")
+    
     # Los arrays numpy ya están listos desde prepare_xy
     x_train_pred = X_train_np
     x_test_pred = X_test_np
@@ -85,7 +83,6 @@ def main():
         x_val_pred = np.expand_dims(x_val_pred, axis=-1)
 
     # --- 5. Generar Predicciones ---
-    # ... (sin cambios) ...
     print("Generando predicciones...")
     pred_train = model.predict(x_train_pred)
     pred_test = model.predict(x_test_pred)
@@ -101,7 +98,6 @@ def main():
     val_data["signal"] = np.vectorize(signal_map.get)(class_val)
 
     print("\n--- Distribución de Señales (Predicción) ---")
-    # ... (sin cambios) ...
     for name, df in [("TRAIN", train_data), ("TEST", test_data), ("VALIDATION", val_data)]:
         print(f"\n{name} Set:")
         signal_counts = df["signal"].value_counts(normalize=True).sort_index()
@@ -111,7 +107,6 @@ def main():
 
 
     # --- 6. Ejecutar Backtest ---
-    # ... (sin cambios) ...
     print("\n--- Iniciando Backtest (Train) ---")
     port_train, cash_train, wr_train, buys_train, sells_train, holds_train, trades_train = backtest(
         train_data.copy(), INITIAL_CASH, STOP_LOSS, TAKE_PROFIT, N_SHARES
@@ -127,7 +122,6 @@ def main():
 
 
     # --- 7. Mostrar Resultados ---
-    # ... (sin cambios) ...
     print(f"\n--- RESULTADOS DEL BACKTEST (Modelo: {MODEL_NAME}) ---")
     results_data = {
         "TRAIN": (cash_train, wr_train, port_train, trades_train, buys_train, sells_train, holds_train),
@@ -136,7 +130,6 @@ def main():
     }
     for name, (cash, win_rate, portfolio, n_trades, n_buys, n_sells, n_holds) in results_data.items():
         print(f"\nResultados: {name}")
-        # ... (impresión de resultados) ...
         print(f"  Capital Inicial: ${INITIAL_CASH:,.2f}")
         print(f"  Capital Final:   ${cash:,.2f}")
         print(f"  Retorno Total:   {((cash / INITIAL_CASH) - 1):.2%}")
@@ -152,7 +145,6 @@ def main():
 
 
     # --- 8. Generar Gráficas ---
-    # ... (sin cambios) ...
     print("\nGenerando gráficas del portafolio...")
     plot_portfolio_train(port_train, MODEL_NAME)
     plot_portfolio_test(port_test, MODEL_NAME)

@@ -113,7 +113,7 @@ def iniciar_entrenamiento_modelos(df_entrenamiento, df_validacion):
             modelo_mlp.fit(
                 x_train, y_train,
                 validation_data=(x_val, y_val),
-                epochs=100, # Aumentado de 2 a 100, pero con EarlyStopping
+                epochs=100,
                 batch_size=32,
                 callbacks=[callback_parada, mlflow.tensorflow.MLflowCallback()],
                 verbose=2

@@ -20,6 +20,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Convertir columnas a numérico
     for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
+  
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
@@ -45,7 +46,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["macd_19_39"] = macd_slow["MACD_19_39_9"] if macd_slow is not None and "MACD_19_39_9" in macd_slow else np.nan
     df["macd_signal_19_39"] = macd_slow["MACDs_19_39_9"] if macd_slow is not None and "MACDs_19_39_9" in macd_slow else np.nan
 
-    stoch_fast = ta.stoch(df["High"], df["Low"], df["Close"], k=14, d=3, smooth_k=3) # Usar smooth_k=3 es común
+    stoch_fast = ta.stoch(df["High"], df["Low"], df["Close"], k=14, d=3, smooth_k=3)
     stoch_slow = ta.stoch(df["High"], df["Low"], df["Close"], k=28, d=3, smooth_k=3)
     df["stoch_k_14"] = stoch_fast["STOCHk_14_3_3"] if stoch_fast is not None and "STOCHk_14_3_3" in stoch_fast else np.nan
     df["stoch_k_28"] = stoch_slow["STOCHk_28_3_3"] if stoch_slow is not None and "STOCHk_28_3_3" in stoch_slow else np.nan
@@ -63,7 +64,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["atr_14"] = ta.atr(df["High"], df["Low"], df["Close"], length=14)
     df["atr_28"] = ta.atr(df["High"], df["Low"], df["Close"], length=28)
 
-    # Bollinger Bands (ancho y %B) - Usando nombres originales BBU_20_2.0_2.0 etc.
+    # Bollinger Bands (ancho y %B)
     bbands = None
     try: bbands = ta.bbands(df["Close"], length=20, std=2)
     except Exception as e: print(f"⚠️ Error calculando BBands: {e}")
@@ -71,20 +72,21 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["bb_width"] = np.nan
     df["bb_percent_b"] = np.nan
     if bbands is not None and isinstance(bbands, pd.DataFrame):
-        # Intentar con el nombre de columna original que tenías
-        bbu_col, bbm_col, bbl_col = "BBU_20_2.0", "BBM_20_2.0", "BBL_20_2.0" #<- Probando nombres sin '_2.0' al final
+        bbu_col, bbm_col, bbl_col = "BBU_20_2.0_2.0", "BBM_20_2.0_2.0", "BBL_20_2.0_2.0"
+        
         if all(col in bbands.columns for col in [bbu_col, bbm_col, bbl_col]):
             bbm_safe = bbands[bbm_col].replace(0, np.nan)
             bb_range = (bbands[bbu_col] - bbands[bbl_col]).replace(0, np.nan)
             if bbm_safe is not None: df["bb_width"] = (bbands[bbu_col] - bbands[bbl_col]) / bbm_safe
             if bb_range is not None: df["bb_percent_b"] = (df["Close"] - bbands[bbl_col]) / bb_range
         else:
-             print(f"Advertencia: Columnas BBands ('{bbu_col}', etc.) no encontradas. Presentes: {list(bbands.columns)}")
+     
+            print(f"Advertencia: Columnas BBands ('{bbu_col}', etc.) no encontradas.")
+            print(f"Presentes: {list(bbands.columns)}")
 
 
     # Std y Donchian
     df["std_20"] = df["Close"].rolling(20).std()
-    # Usar rolling min/max para replicar Donchian Width original
     df["donchian_width"] = df["High"].rolling(20).max() - df["Low"].rolling(20).min()
     df["tr_norm"] = df["atr_14"] / df["Close"].replace(0, np.nan)
 
@@ -94,11 +96,12 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["cmf_20"] = ta.cmf(df["High"], df["Low"], df["Close"], df["Volume"], length=20)
     df["vol_sma_20"] = df["Volume"].rolling(20).mean()
     vol_std_20 = df["Volume"].rolling(20).std()
-    df["vol_zscore_20"] = (df["Volume"] - df["vol_sma_20"]) / vol_std_20.replace(0, np.nan)
+    df["vol_zscore_20"] = (df["Volume"] - df["vol_sma_20"]) / vol_std_20.replace(0, 
+    np.nan)
     vol_sma_5 = df["Volume"].rolling(5).mean()
     df["vol_spike_ratio"] = df["Volume"] / vol_sma_5.replace(0, np.nan)
 
-    # --- VWAP deviation (Lógica Original) ---
+    # --- VWAP deviation ---
     df["vwap_dev"] = np.nan # Inicializar
     df_temp = df.copy() # Copiar el df actual (puede tener NaNs de indicadores previos)
 
@@ -106,24 +109,29 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     if "Date" in df_temp.columns:
         df_temp["Date"] = pd.to_datetime(df_temp["Date"], errors='coerce')
         # Dropear filas donde Date es NaT antes de set_index
+     
         df_temp.dropna(subset=['Date'], inplace=True)
         if not df_temp.empty:
             try:
                 df_temp = df_temp.set_index("Date").sort_index()
                 # Calcular VWAP solo si df_temp no está vacío después de set_index
                 if not df_temp.empty:
+           
                     vwap_series_indexed = ta.vwap(df_temp["High"], df_temp["Low"], df_temp["Close"], df_temp["Volume"])
 
                     if vwap_series_indexed is not None and isinstance(vwap_series_indexed, pd.Series):
                         # Alinear al índice original del DataFrame 'df' (que debería ser RangeIndex)
+                        
                         # Reindexar vwap_series al índice de df_temp para asegurar alineación por fecha
                         vwap_aligned = vwap_series_indexed.reindex(df_temp.index)
                         # Resetear el índice para que coincida con el RangeIndex de 'df'
                         vwap_series = vwap_aligned.reset_index(drop=True)
 
+  
                         # Verificar longitud antes de asignar
                         if len(vwap_series) == len(df):
                            df["vwap_dev"] = (df["Close"] - vwap_series) / vwap_series.replace(0, np.nan)
+            
                         else:
                             print(f"⚠️ Advertencia VWAP: Discrepancia de longitud ({len(vwap_series)} vs {len(df)}). Asignando NaN.")
                     else: print("⚠️ VWAP no pudo calcularse (returned None or wrong type).")
@@ -133,7 +141,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     else: print("⚠️ Columna 'Date' no encontrada para cálculo de VWAP.")
 
 
-    # --- Eliminar filas con NaNs (Lógica Original) ---
+    # --- Eliminar filas con NaNs ---
     print(f"Total de Datos previo a dropna final: {len(df)}")
     rows_before = len(df)
     df = df.dropna() # Eliminar cualquier fila con CUALQUIER NaN
