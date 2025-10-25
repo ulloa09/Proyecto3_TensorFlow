@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from backtest import backtest
-from cnn_model import reshape_for_cnn, build_cnn_model, train_cnn_model
+from cnn_model import reshape_for_cnn, build_cnn_model, train_cnn_model, test_multiple_cnn_configs
 from split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from functions import make_forward_return, compute_thresholds, label_by_thresholds, prepare_xy, compute_class_weights
@@ -17,7 +17,7 @@ datos = generate_features(datos)
 # Calcular rendimiento futuro (forward return)
 datos = make_forward_return(datos, horizon=1)
 # Definir umbrales dinámicos (percentiles)
-lower_thr, upper_thr = compute_thresholds(datos, lower_q=0.2, upper_q=0.8)
+lower_thr, upper_thr = compute_thresholds(datos, lower_q=0.3, upper_q=0.7)
 # Asignar etiquetas
 datos = label_by_thresholds(datos, lower_thr, upper_thr)
 # Drop de NAs
@@ -59,19 +59,24 @@ X_test_seq  = reshape_for_cnn(X_test)
 X_val_seq   = reshape_for_cnn(X_val)
 print(f"Nuevas dimensiones para CNN: \n{X_train_seq.shape, X_test_seq.shape, X_val_seq.shape}")
 
-# Construcción de modelo CNN
-params = {"conv_layers": 2, "conv_filters": 64, "activation": "relu", "dense_units": 64, "dropout": 0.25}
-model1 = build_cnn_model(params, input_shape=X_train_seq.shape[1:], n_classes=3)
-print(f"Modelo CNN creado con éxito:{model1}")
-history, cnn_model, acc, loss = train_cnn_model(
-    model1,
-    X_train_seq, y_train,
-    X_test_seq, y_test,
-    params
+# Construcción del mejor modelo CNN
+params_space = [
+    {"num_filters": 32, "kernel_size": 1, "conv_blocks": 2, "dense_units": 128, "activation": "sigmoid", "dropout": 0.25, "optimizer": "adam", "epochs": 40, "batch_size": 64},
+    {"num_filters": 64, "kernel_size": 1, "conv_blocks": 3, "dense_units": 64, "activation": "relu", "dropout": 0.3, "optimizer": "adam", "epochs": 30, "batch_size": 64},
+    {"num_filters": 64, "kernel_size": 1, "conv_blocks": 2, "dense_units": 128, "activation": "sigmoid", "dropout": 0.25, "optimizer": "adam", "epochs": 30, "batch_size": 32}
+]
+
+best_cnn_model, best_params, best_acc = test_multiple_cnn_configs(
+    params_space=params_space,
+    X_train_seq=X_train_seq,
+    y_train=y_train,
+    X_val_seq=X_test_seq,  # test actúa como validación
+    y_val=y_test,
+    class_weights=class_weights
 )
-print(f"Modelo entrenado en train y prueba en test \n Acc:{acc:.4f} y Loss:{loss:.4f}")
 
+print(f"Mejor modelo listo para backtesting con acc={best_acc:.4f}")
 
-y_pred = np.argmax(cnn_model.predict(X_test_seq), axis=1)
+y_pred = np.argmax(best_cnn_model.predict(X_test_seq), axis=1)
 test_df["target"] = y_pred
 cash, portfolio_value, buy, sell, hold, total_ops = backtest(test_df, stop_loss=0.015, take_profit=0.2, n_shares=10)

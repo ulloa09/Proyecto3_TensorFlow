@@ -66,6 +66,7 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
 
     batch_size = params.get("batch_size", 64)
     epochs     = params.get("epochs", 20)
+    class_weight = params.get("class_weight")
 
     # MLFlow autolog
     mlflow.tensorflow.autolog()
@@ -85,7 +86,8 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
             validation_data=(X_val_seq, y_val),
             epochs=epochs,
             batch_size=batch_size,
-            verbose=2
+            verbose=2,
+            class_weight=class_weight,
         )
 
         # Métricas finales en validación
@@ -111,3 +113,48 @@ def reshape_for_cnn(X):
         X = X.values
     n_samples, n_features = X.shape
     return X.reshape(n_samples, 1, n_features)
+
+def test_multiple_cnn_configs(params_space, X_train_seq, y_train, X_val_seq, y_val, class_weights):
+    """
+    Entrena varios modelos CNN1D con distintas configuraciones de hiperparámetros
+    y devuelve el mejor modelo según accuracy de validación.
+    """
+
+    best_acc = -np.inf
+    best_model = None
+    best_params = None
+
+    for params in params_space:
+        # Agrega class_weight al diccionario
+        params["class_weight"] = class_weights
+
+        print(f"\nEntrenando modelo con parámetros: {params}\n")
+
+        # Construir modelo
+        model = build_cnn_model(
+            params=params,
+            input_shape=X_train_seq.shape[1:],
+            n_classes=3
+        )
+
+        # Entrenar modelo
+        history, trained_model, acc, loss = train_cnn_model(
+            model,
+            X_train_seq, y_train,
+            X_val_seq, y_val,
+            params
+        )
+
+        print(f"Final val_acc={acc:.4f}, val_loss={loss:.4f}")
+
+        # Guardar mejor modelo
+        if acc > best_acc:
+            best_acc = acc
+            best_model = trained_model
+            best_params = params
+
+    print(f"\n=== Mejor modelo encontrado ===")
+    print(f"Params: {best_params}")
+    print(f"Validation Accuracy: {best_acc:.4f}")
+
+    return best_model, best_params, best_acc

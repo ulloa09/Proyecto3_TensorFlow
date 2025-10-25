@@ -119,8 +119,8 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                     take_profit=row.Close * (1 + TP),
                     type='LONG'
                 ))
-            if row.target == 1:
-                hold += 1
+        if row.target == 1:
+            hold += 1
 
         # --- Apertura de nuevas posiciones SHORT ---
         # Si la señal de venta está activa y hay suficiente cash, se abre una posición SHORT.
@@ -139,8 +139,8 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                     take_profit = row.Close * (1 - TP),
                     type = 'SHORT'
                 ))
-            if row.target == 1:
-                hold += 1
+        if row.target == 1:
+            hold += 1
 
         # --- Actualización del valor del portafolio ---
         # Se calcula el valor total considerando cash y posiciones abiertas (long y short).
@@ -195,7 +195,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
 
     # - Win Rate
     win_rate = won / (won+lost) if (won+lost) > 0 else 0
-    total_ops = won + lost
+    total_ops = won + lost + hold
 
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
