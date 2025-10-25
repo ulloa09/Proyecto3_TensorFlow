@@ -43,6 +43,7 @@ print(f"Tamaños de dfs escalados \ntrain:{train_scaled.shape, train_scaled.shap
 # Separación en x, y para train, test y validation
 X_train, X_val, X_test, y_train, y_val, y_test, feature_cols = prepare_xy(train_scaled, val_scaled, test_scaled)
 
+
 # Balanceo de clases
 class_weights = compute_class_weights(y_train)
 

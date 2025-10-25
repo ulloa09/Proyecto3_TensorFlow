@@ -55,83 +55,41 @@ def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) ->
           f"Total por clase:{np.round(df.target.value_counts() / len(df),5)} \n")
     return df
 
-def one_hot_encode(y, num_classes=None):
-    """
-    Versión propia de to_categorical.
-    Convierte un vector de etiquetas (0,1,2,...) en una matriz one-hot.
-    """
-    y = np.array(y, dtype=int)
-    if num_classes is None:
-        num_classes = y.max() + 1
-    one_hot = np.zeros((y.size, num_classes))
-    one_hot[np.arange(y.size), y] = 1
-    return one_hot
-
 def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
     """
-    Prepara X (features) e y (etiquetas) para entrenamiento, validación y prueba.
-    Convierte las etiquetas en formato one-hot para usarlas en modelos de clasificación.
-
-    Parámetros:
-        train_df, val_df, test_df: DataFrames con los datos ya escalados y etiquetados.
-        exclude_cols: columnas que no se usarán como features.
-
-    Devuelve:
-        X_train, X_val, X_test, y_train_oh, y_val_oh, y_test_oh, feature_cols
+    Prepara X (features) e y (etiquetas enteras) para entrenamiento, validación y prueba.
+    Adaptado para modelos con sparse_categorical_crossentropy (como CNN 1D actual).
     """
+
     if exclude_cols is None:
         exclude_cols = ["Date", "fwd_ret", "target"]
 
-    # Selecciona columnas de features (todas menos las excluidas)
     feature_cols = [c for c in train_df.columns if c not in exclude_cols]
 
-    # Features → arrays numpy
+    # Features a float32
     X_train = train_df[feature_cols].to_numpy(dtype=np.float32)
     X_val   = val_df[feature_cols].to_numpy(dtype=np.float32)
     X_test  = test_df[feature_cols].to_numpy(dtype=np.float32)
 
-    # Etiquetas → vectores de clase (0, 1, 2)
+    # Etiquetas como enteros (no one-hot)
     y_train = train_df["target"].astype(int).to_numpy()
     y_val   = val_df["target"].astype(int).to_numpy()
     y_test  = test_df["target"].astype(int).to_numpy()
 
-    # Convierte a formato one-hot (para categorical_crossentropy)
-    y_train_oh = one_hot_encode(y_train, num_classes=3)
-    y_val_oh = one_hot_encode(y_val, num_classes=3)
-    y_test_oh = one_hot_encode(y_test, num_classes=3)
-
     print("Shapes:")
-    print("X_train:", X_train.shape, "| y_train:", y_train_oh.shape)
-    print("X_val:", X_val.shape, "| y_val:", y_val_oh.shape)
-    print("X_test:", X_test.shape, "| y_test:", y_test_oh.shape)
+    print("X_train:", X_train.shape, "| y_train:", y_train.shape)
+    print("X_val:", X_val.shape, "| y_val:", y_val.shape)
+    print("X_test:", X_test.shape, "| y_test:", y_test.shape)
 
-    return X_train, X_val, X_test, y_train_oh, y_val_oh, y_test_oh, feature_cols
+    return X_train, X_val, X_test, y_train, y_val, y_test, feature_cols
+
 
 def compute_class_weights(y_train):
     """
-    Calcula pesos balanceados para las clases del conjunto de entrenamiento.
-    Útil cuando hay desbalance (por ejemplo, muchas etiquetas de clase 1 y pocas de 0 o 2).
-
-    Parámetros:
-        y_train : np.ndarray
-            Etiquetas del conjunto de entrenamiento (pueden ser one-hot o enteros).
-
-    Devuelve:
-        class_weights : dict
-            Diccionario con los pesos de clase {0: peso0, 1: peso1, 2: peso2}.
+    Calcula pesos balanceados para clases en formato entero (0, 1, 2).
     """
-    import numpy as np
-
-    # Si viene one-hot (matriz), la convertimos a enteros
-    if y_train.ndim > 1:
-        y_train_int = np.argmax(y_train, axis=1)
-    else:
-        y_train_int = y_train
-
-    # Calcula pesos balanceados
-    classes = np.unique(y_train_int)
-    weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train_int)
-
+    classes = np.unique(y_train)
+    weights = compute_class_weight(class_weight="balanced", classes=classes, y=y_train)
     class_weights = {int(c): float(w) for c, w in zip(classes, weights)}
 
     print("Pesos de clase calculados:")
