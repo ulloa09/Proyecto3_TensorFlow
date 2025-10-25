@@ -13,6 +13,9 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     # Copia el DataFrame para evitar modificar el original.
     data = data.copy()
 
+    if "Date" in data.columns:
+        data.rename(columns={"Date": "Datetime"}, inplace=True)
+
     # --- Preparación del DataFrame con señales ---
     historic = data.copy()
     historic = historic.dropna()
@@ -207,5 +210,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     # --- Salida de la función ---
     # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
     # Si se pasan parámetros, se devuelve Calmar, la serie de valores del portafolio y el DataFrame de resultados.
+    print(results)
+    print(f"Terminando con cash:{cash:.4f}, valor final port:{portfolio_value[-1]:.4f} \ntotal moves hold:{hold}, total de operaciones:{total_ops}")
 
-    return cash, portfolio_value, win_rate, buy, sell, hold, total_ops, print(results)
+    return cash, portfolio_value, buy, sell, hold, total_ops

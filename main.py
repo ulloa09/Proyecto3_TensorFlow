@@ -1,5 +1,7 @@
+import numpy as np
 import pandas as pd
 
+from backtest import backtest
 from cnn_model import reshape_for_cnn, build_cnn_model, train_cnn_model
 from split import split_dfs
 from preprocess_features import fechas, fit_scalers, apply_scalers
@@ -32,6 +34,12 @@ test_scaled = apply_scalers(test_df, min_max_scaler, robust_scaler, standard_sca
 val_scaled = apply_scalers(validation_df, min_max_scaler, robust_scaler, standard_scaler, ohlcv_scaler)
 print("\n \nEscaladores aplicados a todos los conjuntos correctamente.")
 
+# Conservar fecha (necesaria backtesting)
+train_scaled["Date"] = train_df["Date"]
+test_scaled["Date"] = test_df["Date"]
+val_scaled["Date"] = validation_df["Date"]
+
+
 # === Guardar resultados en disco para revisión rápida ===
 train_scaled.to_csv("data/train_scaled.csv", index=False)
 test_scaled.to_csv("data/test_scaled.csv", index=False)
@@ -62,3 +70,8 @@ history, cnn_model, acc, loss = train_cnn_model(
     params
 )
 print(f"Modelo entrenado en train y prueba en test \n Acc:{acc:.4f} y Loss:{loss:.4f}")
+
+
+y_pred = np.argmax(cnn_model.predict(X_test_seq), axis=1)
+test_df["target"] = y_pred
+cash, portfolio_value, buy, sell, hold, total_ops = backtest(test_df, stop_loss=0.015, take_profit=0.2, n_shares=10)
