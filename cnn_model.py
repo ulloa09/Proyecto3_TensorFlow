@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import mlflow
-import mlflow.tensorflow
+import pandas as pd
 
 def build_cnn_model(params, input_shape, n_classes):
     """
@@ -99,3 +99,15 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         mlflow.tensorflow.log_model(model, artifact_path="cnn_model")
 
     return history, model
+
+def reshape_for_cnn(X):
+    """
+    Reformatea un conjunto de datos tabular (n_samples, n_features)
+    al formato requerido por una CNN1D: (n_samples, timesteps, n_features).
+
+    Por ahora cada fila se trata como una secuencia de longitud 1.
+    """
+    if isinstance(X, pd.DataFrame):
+        X = X.values
+    n_samples, n_features = X.shape
+    return X.reshape(n_samples, 1, n_features)

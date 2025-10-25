@@ -7,7 +7,7 @@ import mlflow
 x_train, x_test = x_train / 255.0, x_test / 255.0
 
 
-mlflow .tensorflow.autolog()
+mlflow.tensorflow.autolog()
 mlflow.set_experiment("CNN Tuning")
 
 print("x_train shape:", x_train.shape)

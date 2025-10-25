@@ -96,3 +96,4 @@ def compute_class_weights(y_train):
     for k, v in class_weights.items():
         print(f"  Clase {k}: {v:.3f}")
     return class_weights
+
