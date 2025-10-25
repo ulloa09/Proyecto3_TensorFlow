@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/224138948191754342/9acb186b28204cc2a46c4410ac6fcda8/artifacts
+end_time: 1761352447264
+entry_point_name: ''
+experiment_id: '224138948191754342'
+lifecycle_stage: active
+run_id: 9acb186b28204cc2a46c4410ac6fcda8
+run_name: MLP_layers3_units150_relu
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761352423949
+status: 3
+tags: []
+user_id: david

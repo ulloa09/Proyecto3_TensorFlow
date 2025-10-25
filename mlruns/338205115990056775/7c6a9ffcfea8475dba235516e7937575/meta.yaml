@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/338205115990056775/7c6a9ffcfea8475dba235516e7937575/artifacts
+end_time: 1761343651940
+entry_point_name: ''
+experiment_id: '338205115990056775'
+lifecycle_stage: active
+run_id: 7c6a9ffcfea8475dba235516e7937575
+run_name: MLP_capas3_unidades150_tanh
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761343608264
+status: 3
+tags: []
+user_id: david

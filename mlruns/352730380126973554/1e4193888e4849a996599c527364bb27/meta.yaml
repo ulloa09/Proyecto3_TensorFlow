@@ -1,8 +1,9 @@
 artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/352730380126973554/1e4193888e4849a996599c527364bb27/artifacts
+deleted_time: 1761344060190
 end_time: 1761262773684
 entry_point_name: ''
 experiment_id: '352730380126973554'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 1e4193888e4849a996599c527364bb27
 run_name: CNN_capas4_filtros16_relu
 source_name: ''

@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/338205115990056775/models/m-c5ddf06abb5a436eb1663deeb026e84d/artifacts
+creation_timestamp: 1761343674595
+experiment_id: '338205115990056775'
+last_updated_timestamp: 1761343686356
+model_id: m-c5ddf06abb5a436eb1663deeb026e84d
+model_type: null
+name: model
+source_run_id: e72844f936ea4b8386a488f3dec0e082
+status: 2
+status_message: null

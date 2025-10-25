@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/586912028131146669/0aee0b9d39e649fc8bfe0ca46dff4955/artifacts
+end_time: 1761353299048
+entry_point_name: ''
+experiment_id: '586912028131146669'
+lifecycle_stage: active
+run_id: 0aee0b9d39e649fc8bfe0ca46dff4955
+run_name: CNN_conv3_filters64_dense100_tanh
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761353273015
+status: 3
+tags: []
+user_id: david

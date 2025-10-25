@@ -1,0 +1,8 @@
+{
+  "accuracy": 0.18136020004749298,
+  "loss": NaN,
+  "val_accuracy": 0.17610062658786774,
+  "val_loss": NaN,
+  "epoch": 0,
+  "global_step": 75
+}
