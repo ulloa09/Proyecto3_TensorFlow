@@ -1,13 +1,15 @@
 import numpy as np
 import pandas as pd
 
+days = 252
+
 # --- Calcula el Índice de Sharpe anualizado ---
 # Esta función recibe la media y desviación estándar de retornos horarios,
 # y calcula el Sharpe ratio anualizado asumiendo 8760 horas por año.
 # El Sharpe ratio mide la rentabilidad ajustada por riesgo.
 def annualized_sharpe(mean: float, std: float) -> float:
-    annual_rets = (mean * 8760)
-    annual_std = std * np.sqrt(8760)
+    annual_rets = (mean * days)
+    annual_std = std * np.sqrt(days)
 
     return annual_rets / annual_std if annual_std > 0 else 0
 
@@ -23,7 +25,7 @@ def maximum_drawdown(values: pd.Series) -> float:
 # Combina la rentabilidad anualizada con la máxima pérdida para medir
 # la relación entre retorno y riesgo de caída máxima.
 def annualized_calmar(mean, values) -> float:
-    annual_rets = (mean * 8760)
+    annual_rets = (mean * days)
     max_drawdown = maximum_drawdown(values)
     return annual_rets / max_drawdown if max_drawdown != 0 else 0
 
@@ -38,8 +40,8 @@ def downside_deviation(rets) -> float:
 # Similar al Sharpe, pero utiliza la desviación a la baja para el denominador,
 # enfocándose en el riesgo de pérdidas en lugar de la volatilidad total.
 def annualized_sortino(mean: float, rets) -> float:
-    annual_rets = (mean * 8760)
-    annual_std_down = downside_deviation(rets) * np.sqrt(8760)
+    annual_rets = (mean * days)
+    annual_std_down = downside_deviation(rets) * np.sqrt(days)
     return annual_rets / annual_std_down if annual_rets > 0 else 0
 
 # --- Calcula la tasa de aciertos (win rate) ---
