@@ -98,7 +98,7 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         # Guardar el modelo en MLFlow
         mlflow.tensorflow.log_model(model, artifact_path="cnn_model")
 
-    return history, model
+    return history, model, final_val_acc, final_val_loss
 
 def reshape_for_cnn(X):
     """
