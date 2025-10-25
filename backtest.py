@@ -4,7 +4,8 @@ import pandas as pd
 import ta
 
 from metrics import annualized_sharpe, annualized_calmar, annualized_sortino, win_rate
-from models import Operation, get_portfolio_value
+from functions import get_portfolio_value
+from operation_class import Operation
 
 
 def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
@@ -16,6 +17,9 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     historic = data.copy()
     historic = historic.dropna()
 
+    # --- Generar señales de compra y venta basadas en la columna target ---
+    historic["buy_signal"] = historic["target"] == 2
+    historic["sell_signal"] = historic["target"] == 0
 
     # --- Inicialización de variables para la simulación ---
     # COM representa el costo por operación (comisión).
@@ -43,6 +47,11 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     won = 0
     lost = 0
 
+    # Conteo de señales y operaciones abiertas
+    buy = 0
+    sell = 0
+    hold = 0
+
     # --- Iteración sobre cada fila del histórico para simular operaciones ---
     for row in historic.itertuples(index=False):
 
@@ -52,10 +61,10 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
         for position in active_long_positions[:]: # Iterate over a copy of the list
             if position.stop_loss > row.Close  or position.take_profit < row.Close:
                 # Calcular PNL previo al cierre
-                fee = (position.price + row.Close) * position.n_shares * COM
+                fee = (row.Close) * position.n_shares * COM
                 pnl = ((row.Close - position.price) * position.n_shares) - fee
                 # Close the position
-                cash += row.Close * position.n_shares * (1 - COM)
+                cash += row.Close * position.n_shares
                 # Checar si se ganó o se perdió
                 if pnl > 0:
                     won += 1
@@ -65,13 +74,27 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                 # Remove the position from active positions
                 active_long_positions.remove(position)
 
+        # Costo de operaciones SHORT
+        for position in active_short_positions[:]:
+            magnitud = row.Close * position.n_shares
+            costo_cobertura = magnitud * BORROW_DIARIO
+            cash -= costo_cobertura
+
         # --- Cierre de posiciones SHORT ---
         # Similar al cierre de LONG, pero con condiciones invertidas para stop loss y take profit.
         # Se calcula la ganancia o pérdida considerando la diferencia entre precio de entrada y cierre.
         for position in active_short_positions[:]:  # Iterate over a copy of the list
             if position.stop_loss < row.Close or position.take_profit > row.Close:
+                # Calcular PNL previo al cierre
+                fee = row.Close * position.n_shares * COM
+                pnl = ((position.price - row.Close) * position.n_shares) - fee
                 # Close the position
-                cash += ((position.price * position.n_shares) + (position.price * n_shares - row.Close * position.n_shares))*(1 - COM)
+                cash += pnl
+                if pnl > 0:
+                    won += 1
+                else:
+                    lost += 1
+                    portfolio_value.append(pnl)
                 # Remove the position from active positions
                 active_short_positions.remove(position)
 
@@ -84,6 +107,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
             cost = row.Close * n_shares * (1 + COM)
             if cash > cost:
                 cash -= cost
+                buy += 1
                 active_long_positions.append(Operation(
                     time=row.Datetime,
                     price=row.Close,
@@ -101,6 +125,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
             cost = row.Close * n_shares * (1 + COM)
             if cash > cost:
                 cash -= cost
+                sell += 1
                 active_short_positions.append(Operation(
                     time=row.Datetime,
                     price = row.Close,
@@ -109,13 +134,36 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
                     take_profit = row.Close * (1 - TP),
                     type = 'SHORT'
                 ))
+            else:
+                hold += 1
 
         # --- Actualización del valor del portafolio ---
         # Se calcula el valor total considerando cash y posiciones abiertas (long y short).
         portfolio_value.append(get_portfolio_value(
             cash, long_ops=active_long_positions, short_ops=active_short_positions,
-            current_price=row.Close, COM=COM
+            current_price=row.Close, n_shares=n_shares,
         ))
+
+        # Close long positions
+    for position in active_long_positions:
+        pnl = (row.Close - position.price) * position.n_shares * (1 - COM)
+        cash += row.Close * position.n_shares * (1 - COM)
+        # Ganó o perdió?
+        if pnl >= 0:
+            won += 1
+        else:
+            lost += 1
+
+    for position in active_short_positions:
+        pnl = (position.price - row.Close) * position.n_shares
+        short_com = row.Close * position.n_shares * COM
+        cash += pnl - short_com
+        # Ganó o perdió?
+        if pnl >= 0:
+            won += 1
+        else:
+            lost += 1
+
 
     # --- Limpieza de posiciones abiertas al final del backtest ---
     active_long_positions = []
@@ -132,14 +180,16 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     # - Sharpe anualizado mide el retorno ajustado al riesgo.
     # - Calmar anualizado mide retorno ajustado a la máxima caída.
     # - Sortino anualizado mide retorno ajustado a la volatilidad negativa.
-    # - Win Rate es la proporción de días con retorno positivo.
     mean_t = df.rets.mean()
     std_t = df.rets.std()
     values_port = df['value']
     sharpe_anual = annualized_sharpe(mean=mean_t, std=std_t)
     calmar = annualized_calmar(mean=mean_t, values=values_port)
     sortino = annualized_sortino(mean_t, df['rets'])
-    wr = win_rate(df['rets'])
+
+    # - Win Rate
+    win_rate = won / (won+lost) if (won+lost) > 0 else 0
+    total_ops = won + lost
 
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
@@ -148,14 +198,10 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float) -> float:
     results['Sharpe'] = sharpe_anual
     results['Calmar'] = calmar
     results['Sortino'] = sortino
-    results['Win Rate'] = wr
+    results['Win Rate'] = win_rate
 
     # --- Salida de la función ---
     # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
     # Si se pasan parámetros, se devuelve Calmar, la serie de valores del portafolio y el DataFrame de resultados.
-    if params is None:
-        return calmar
-    else:
-        return calmar, values_port, results
 
-'''
+    return cash, portfolio_value, win_rate, buy, sell, hold, total_ops, print(results)
