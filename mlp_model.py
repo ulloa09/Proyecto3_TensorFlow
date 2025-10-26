@@ -1,4 +1,6 @@
 import tensorflow as tf
+from keras.src.metrics import Recall, Precision
+
 
 def build_mlp_model(params, input_shape, num_classes):
     """
@@ -19,7 +21,7 @@ def build_mlp_model(params, input_shape, num_classes):
     model.compile(
         optimizer=params["optimizer"],
         loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
+        metrics=["accuracy", Precision(name="precision"), Recall(name="recall")],
     )
     return model
 
