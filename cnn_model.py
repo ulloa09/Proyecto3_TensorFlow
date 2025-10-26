@@ -3,6 +3,8 @@ import numpy as np
 import tensorflow as tf
 import mlflow
 import pandas as pd
+from keras.src.metrics import Precision, Recall
+
 
 def build_cnn_model(params, input_shape, n_classes):
     """
@@ -53,7 +55,7 @@ def build_cnn_model(params, input_shape, n_classes):
     model.compile(
         optimizer=optimizer_name,
         loss="sparse_categorical_crossentropy",  # etiquetas enteras 0,1,2
-        metrics=["accuracy"]
+        metrics=["accuracy", Precision(name="precision"), Recall(name="recall")]
     )
 
     return model
