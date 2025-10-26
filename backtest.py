@@ -20,6 +20,11 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     historic = data.copy()
     historic = historic.dropna()
 
+    if historic.empty:
+        print("Error de Backtest: DataFrame vacío después de dropna.")
+        # Devolver una Serie vacía pero con formato para evitar errores
+        return 1_000_000, pd.Series(dtype=float), 0, 0, 0, 0
+          
     # --- Generar señales de compra y venta basadas en la columna target ---
     historic["buy_signal"] = historic["target"] == 2
     historic["sell_signal"] = historic["target"] == 0
@@ -37,14 +42,15 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     BORROW_DIARIO = BORROW_RATE / days
 
     cash = 1_000_000
-
     
     # Listas para mantener las posiciones abiertas de tipo LONG y SHORT.
-    active_long_positions: list[Operation] = []
-    active_short_positions: list[Operation] = []
+    active_long_positions: list[Operation] = [] 
+    active_short_positions: list[Operation] = [] 
 
     # Lista para almacenar el valor total del portafolio en cada paso.
-    portfolio_value = [cash]
+    portfolio_value = [cash] 
+    # Registrar las fechas para el índice de la Serie
+    portfolio_dates = [historic['Datetime'].iloc[0] - pd.Timedelta(days=1)]
 
     # Listas para almacenar operaciones ganadas y perdidas
     won = 0
@@ -54,9 +60,12 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     buy = 0
     sell = 0
     hold = 0
+    
+    last_row = None
 
     # --- Iteración sobre cada fila del histórico para simular operaciones ---
-    for row in historic.itertuples(index=False):
+    for row in historic.itertuples(index=False): 
+        last_row = row # Guardar última fila para cierre
 
         # --- Cierre de posiciones LONG ---
         # Se verifica si el precio actual alcanza el stop loss o take profit para cerrar la posición.
@@ -66,22 +75,24 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
                 # Calcular PNL previo al cierre
                 fee = (row.Close) * position.n_shares * COM
                 pnl = ((row.Close - position.price) * position.n_shares) - fee
+  
                 # Close the position
-                cash += row.Close * position.n_shares
+                cash += row.Close * position.n_shares 
                 # Checar si se ganó o se perdió
                 if pnl > 0:
-                    won += 1
+                  
+                   won += 1 
                 else:
-                    lost += 1
-                    portfolio_value.append(pnl)
+                    lost += 1 
                 # Remove the position from active positions
                 active_long_positions.remove(position)
 
-        # Costo de operaciones SHORT
-        for position in active_short_positions[:]:
+         # Costo de operaciones SHORT
+     
+        for position in active_short_positions[:]: 
             magnitud = row.Close * position.n_shares
             costo_cobertura = magnitud * BORROW_DIARIO
-            cash -= costo_cobertura
+            cash -= costo_cobertura 
 
         # --- Cierre de posiciones SHORT ---
         # Similar al cierre de LONG, pero con condiciones invertidas para stop loss y take profit.
@@ -91,13 +102,14 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
                 # Calcular PNL previo al cierre
                 fee = row.Close * position.n_shares * COM
                 pnl = ((position.price - row.Close) * position.n_shares) - fee
+  
                 # Close the position
-                cash += pnl
+                cash += pnl 
                 if pnl > 0:
-                    won += 1
+                    won += 1 
                 else:
-                    lost += 1
-                    portfolio_value.append(pnl)
+    
+                    lost += 1 
                 # Remove the position from active positions
                 active_short_positions.remove(position)
 
@@ -105,17 +117,19 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
         # --- Apertura de nuevas posiciones LONG ---
         # Si la señal de compra está activa y hay suficiente cash, se abre una posición LONG.
         # Se descuenta el costo de la operación incluyendo comisión.
-        if row.buy_signal:
+        if row.buy_signal: 
             # Descontar el costo
             cost = row.Close * n_shares * (1 + COM)
             if cash > cost:
                 cash -= cost
                 buy += 1
-                active_long_positions.append(Operation(
+            
+            active_long_positions.append(Operation(
                     time=row.Datetime,
                     price=row.Close,
                     n_shares=n_shares,
                     stop_loss=row.Close * (1 - SL),
+            
                     take_profit=row.Close * (1 + TP),
                     type='LONG'
                 ))
@@ -131,11 +145,13 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
             if cash > cost:
                 cash -= cost
                 sell += 1
-                active_short_positions.append(Operation(
+             
+            active_short_positions.append(Operation(
                     time=row.Datetime,
                     price = row.Close,
                     n_shares = n_shares,
                     stop_loss = row.Close*(1 + SL),
+         
                     take_profit = row.Close * (1 - TP),
                     type = 'SHORT'
                 ))
@@ -143,31 +159,38 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
             hold += 1
 
         # --- Actualización del valor del portafolio ---
+     
         # Se calcula el valor total considerando cash y posiciones abiertas (long y short).
-        portfolio_value.append(get_portfolio_value(
+        current_port_val = get_portfolio_value(
             cash, long_ops=active_long_positions, short_ops=active_short_positions,
             current_price=row.Close, n_shares=n_shares,
-        ))
+        )
+        portfolio_value.append(current_port_val)
+        portfolio_dates.append(row.Datetime) # Registrar la fecha
 
+    # --- Cierre de posiciones al final del backtest ---
+    if last_row:
         # Close long positions
-    for position in active_long_positions:
-        pnl = (row.Close - position.price) * position.n_shares * (1 - COM)
-        cash += row.Close * position.n_shares * (1 - COM)
-        # Ganó o perdió?
-        if pnl >= 0:
-            won += 1
-        else:
-            lost += 1
+        for position in active_long_positions:
+   
+            pnl = (last_row.Close - position.price) * position.n_shares * (1 - COM)
+            cash += last_row.Close * position.n_shares * (1 - COM)
+            # Ganó o perdió?
+            if pnl >= 0:
+                won += 1
+            else:
+                lost += 1
 
-    for position in active_short_positions:
-        pnl = (position.price - row.Close) * position.n_shares
-        short_com = row.Close * position.n_shares * COM
-        cash += pnl - short_com
-        # Ganó o perdió?
-        if pnl >= 0:
-            won += 1
-        else:
-            lost += 1
+        for position in active_short_positions:
+            pnl = (position.price - last_row.Close) * position.n_shares
+            short_com = last_row.Close * position.n_shares * COM
+  
+            cash += pnl - short_com
+            # Ganó o perdió?
+            if pnl >= 0:
+                won += 1
+            else:
+                lost += 1
 
 
     # --- Limpieza de posiciones abiertas al final del backtest ---
@@ -176,10 +199,10 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
 
     # --- Cálculo de métricas de rendimiento ---
     # Se crea un DataFrame con el valor del portafolio y los retornos diarios.
-    df = pd.DataFrame()
+    df = pd.DataFrame(index=portfolio_dates)
     df['value'] = portfolio_value
     df['rets'] = df.value.pct_change()
-    #df.dropna(inplace=True)
+    df.dropna(subset=['rets'], inplace=True) # Usar subset='rets'
 
     # Se calculan las métricas estadísticas para evaluar la estrategia:
     # - Sharpe anualizado mide el retorno ajustado al riesgo.
@@ -187,15 +210,15 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     # - Sortino anualizado mide retorno ajustado a la volatilidad negativa.
     mean_t = df.rets.mean()
     std_t = df.rets.std()
-    values_port = df['value']
+    values_port_for_metrics = df['value']
     sharpe_anual = annualized_sharpe(mean=mean_t, std=std_t)
-    calmar = annualized_calmar(mean=mean_t, values=values_port)
+    calmar = annualized_calmar(mean=mean_t, values=values_port_for_metrics)
     sortino = annualized_sortino(mean_t, df['rets'])
-    max_drawdown = maximum_drawdown(values_port)
+    max_drawdown = maximum_drawdown(values_port_for_metrics)
 
     # - Win Rate
     win_rate = won / (won+lost) if (won+lost) > 0 else 0
-    total_ops = won + lost + hold
+    total_ops = won + lost # Total de operaciones cerradas
 
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
@@ -207,10 +230,14 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     results['Win Rate'] = win_rate
     results['Max Drawdown'] = max_drawdown
 
+    # Crear la Serie de portafolio completa para graficar
+    portfolio_series = pd.Series(portfolio_value, index=portfolio_dates)
+    portfolio_series = portfolio_series[~portfolio_series.index.duplicated(keep='last')]
+
     # --- Salida de la función ---
     # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
     # Si se pasan parámetros, se devuelve Calmar, la serie de valores del portafolio y el DataFrame de resultados.
     print(results)
     print(f"Terminando con cash:{cash:.4f}, valor final port:{portfolio_value[-1]:.4f} \ntotal moves sin hold:{sell+buy}, total de operaciones:{total_ops}")
 
-    return cash, portfolio_value, buy, sell, hold, total_ops
+    return cash, portfolio_series, buy, sell, hold, total_ops

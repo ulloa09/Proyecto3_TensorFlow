@@ -5,6 +5,7 @@ from operation_class import Operation
 
 def get_portfolio_value(cash: float, long_ops: list[Operation], short_ops: list[Operation], current_price: float, n_shares: int)-> float:
 
+   
     val = cash
 
     # Agregar posiciones largas
@@ -21,7 +22,8 @@ def get_portfolio_value(cash: float, long_ops: list[Operation], short_ops: list[
 
 def make_forward_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
     """
-    Agrega 'fwd_ret' = Close.shift(-horizon)/Close - 1 y recorta las últimas 'horizon' filas.
+    Agrega 'fwd_ret' = Close.shift(-horizon)/Close 
+    - 1 y recorta las últimas 'horizon' filas.
     """
     df = df.copy()
     df["fwd_ret"] = df["Close"].shift(-horizon) / df["Close"] - 1
@@ -57,7 +59,8 @@ def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) ->
 
 def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
     """
-    Prepara X (features) e y (etiquetas enteras) para entrenamiento, validación y prueba.
+    Prepara X (features) e y (etiquetas enteras) para 
+    entrenamiento, validación y prueba.
     Adaptado para modelos con sparse_categorical_crossentropy (como CNN 1D actual).
     """
 
@@ -77,6 +80,7 @@ def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
     y_test  = test_df["target"].astype(int).to_numpy()
 
     print("Shapes:")
+    
     print("X_train:", X_train.shape, "| y_train:", y_train.shape)
     print("X_val:", X_val.shape, "| y_val:", y_val.shape)
     print("X_test:", X_test.shape, "| y_test:", y_test.shape)
@@ -96,4 +100,3 @@ def compute_class_weights(y_train):
     for k, v in class_weights.items():
         print(f"  Clase {k}: {v:.3f}")
     return class_weights
-

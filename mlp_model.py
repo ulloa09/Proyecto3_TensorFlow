@@ -1,4 +1,3 @@
-# mlp_model.py
 import tensorflow as tf
 
 def build_mlp_model(params, input_shape, num_classes):
@@ -11,6 +10,7 @@ def build_mlp_model(params, input_shape, num_classes):
     # Capas ocultas densas
     for _ in range(params["dense_blocks"]):
         model.add(tf.keras.layers.Dense(params["dense_units"], activation=params["activation"]))
+ 
         model.add(tf.keras.layers.Dropout(params["dropout"]))
 
     # Capa de salida
@@ -43,6 +43,7 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
 
         history = model.fit(
             X_train, y_train,
+ 
             validation_data=(X_val, y_val),
             epochs=params["epochs"],
             batch_size=params["batch_size"],
@@ -54,4 +55,5 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
         mlflow.log_metric("final_val_loss", val_loss)
         mlflow.tensorflow.log_model(model, artifact_path="mlp_model")
 
+    
     return history, model, val_acc, val_loss

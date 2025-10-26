@@ -13,7 +13,6 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
         train_df, test_df, validation_df: DataFrames con columna 'timestamp' (en ms) o 'Datetime'.
         params: dict con los mejores parámetros para el backtest.
         plot: si True, muestra las gráficas.
-
     Retorna:
         dict con las series de rendimientos y la curva total del portafolio.
     """
@@ -26,6 +25,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
         elif 'Datetime' in df.columns:
             idx = pd.to_datetime(df['Datetime'], errors='coerce')
         else:
+         
             idx = pd.to_datetime(df.index, errors='coerce')
 
         idx = idx[idx.notna()]
@@ -36,6 +36,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
             v = v.iloc[1:]
         if len(v) != len(idx):
             min_len = min(len(v), len(idx))
+           
             v = v.iloc[-min_len:]
             idx = idx.iloc[-min_len:]
 
@@ -52,6 +53,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
     portfolio = portfolio[~portfolio.index.duplicated(keep='last')]
 
     def period_returns(series, rule):
+        
         return series.resample(rule).last().pct_change().dropna()
 
     monthly = period_returns(portfolio, 'M')
@@ -64,6 +66,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
         elif name == 'Quarterly':
             periods = s.index.to_period('Q').astype(str)
         else:
+            
             periods = s.index.to_period('Y').astype(str)
         tbl = pd.DataFrame({'Period': periods, 'Return %': (s.values * 100).round(2)})
         print(f"\n{name} returns")
@@ -80,6 +83,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
         plt.tight_layout()
         plt.show()
 
+ 
         (quarterly * 100).plot(kind='bar', figsize=(14, 4), title='Quarterly Returns (%)')
         plt.axhline(0, linewidth=1)
         plt.tight_layout()
@@ -92,6 +96,7 @@ def show_results(train_df, test_df, validation_df, params, plot: bool = True):
 
     return {
         'series': portfolio,
+   
         'monthly': monthly,
         'quarterly': quarterly,
         'annual': annual

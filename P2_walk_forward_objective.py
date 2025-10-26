@@ -9,7 +9,6 @@ import pandas as pd
 # mediante Optuna, utilizando validación cruzada temporal (walk-forward analysis).
 # La función evalúa parámetros en diferentes segmentos temporales y devuelve el promedio
 # del Calmar ratio obtenido, permitiendo seleccionar los parámetros óptimos para el backtest.
-
 def walk_forward_objective(trial, data: pd.DataFrame, n_splits: int) -> float:
     """
     Función objetivo para Optuna con validación cruzada temporal (walk-forward analysis).
@@ -22,6 +21,7 @@ def walk_forward_objective(trial, data: pd.DataFrame, n_splits: int) -> float:
         n_splits: número de divisiones temporales para la validación cruzada.
 
     Returns:
+  
         float: promedio del Calmar ratio en todos los splits.
     """
 
@@ -38,7 +38,8 @@ def walk_forward_objective(trial, data: pd.DataFrame, n_splits: int) -> float:
         'macd_fast': trial.suggest_int('macd_fast', 5, 12),
         'macd_slow': trial.suggest_int('macd_slow', 20, 40),
         'macd_signal': trial.suggest_int('macd_signal', 9, 18),
-        'bb_window': trial.suggest_int('bb_window', 20, 50),
+        'bb_window': trial.suggest_int('bb_window', 
+20, 50),
         'bb_std': trial.suggest_int('bb_std', 1, 3),
         'obv_window': trial.suggest_int('obv_window', 20, 50),
         'atr_window': trial.suggest_int('atr_window', 10, 30),

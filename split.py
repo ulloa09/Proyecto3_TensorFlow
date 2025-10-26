@@ -6,7 +6,6 @@ def split_dfs(data, train:int, test:int, validation:int):
     # --- Validación de proporciones ---
     # Asegura que los tres porcentajes cubran el 100% del dataset.
     assert train + test + validation == 100, "La suma de train, test y validation debe ser 100 exacto."
-
     # --- Cálculo de índices de corte ---
     # Define los límites de cada bloque con base en los porcentajes indicados.
     n = len(data)

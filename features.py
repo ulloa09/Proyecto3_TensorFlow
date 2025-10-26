@@ -41,6 +41,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
     df["williams_r_14"] = ta.willr(df["High"], df["Low"], df["Close"], length=14)
 
 
+    
     # ==== VOLATILIDAD ====
     df["atr_14"] = ta.atr(df["High"], df["Low"], df["Close"], length=14)
     df["atr_28"] = ta.atr(df["High"], df["Low"], df["Close"], length=28)
@@ -57,6 +58,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
     # ==== VOLUMEN ====
+    
     df["obv"] = ta.obv(df["Close"], df["Volume"])
     df["mfi_14"] = ta.mfi(df["High"], df["Low"], df["Close"], df["Volume"], length=14)
     df["cmf_20"] = ta.cmf(df["High"], df["Low"], df["Close"], df["Volume"], length=20)
@@ -71,6 +73,7 @@ def generate_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Si hay columna 'Date', la convertimos y la usamos solo en la copia
     if "Date" in df_temp.columns:
+  
         df_temp["Date"] = pd.to_datetime(df_temp["Date"])
         df_temp = df_temp.sort_values("Date")  # ordenar por fecha
         df_temp = df_temp.set_index("Date")

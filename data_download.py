@@ -2,9 +2,6 @@ import yfinance as yf
 import numpy as np
 import pandas as pd
 
-import pandas as pd
-import yfinance as yf
-
 # Descarga directa y limpia desde cero
 data = yf.download(
     tickers="WYNN",
@@ -30,5 +27,3 @@ data.to_csv('data/wynn_daily_15y.csv', index=False)
 
 print(data.head())
 print(f"Datos descargados: {len(data)} registros entre {data['Date'].min()} y {data['Date'].max()}")
-
-
