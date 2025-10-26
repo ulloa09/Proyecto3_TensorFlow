@@ -28,8 +28,8 @@ def build_mlp_model(params, input_shape, num_classes):
     # Compile the model
     model.compile(
         optimizer=params["optimizer"],
-        loss="sparse_categorical_crossentropy", # For integer labels
-        metrics=["accuracy", Precision(name="precision"), Recall(name="recall")],
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
     )
     return model
 
