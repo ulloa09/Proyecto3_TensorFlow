@@ -24,16 +24,34 @@ def build_mlp_model(params, input_shape, num_classes):
     return model
 
 
+import mlflow
+
 def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
     """
-    Entrena el modelo MLP y devuelve métricas clave.
+    Entrena el modelo MLP y registra métricas con MLFlow.
     """
-    history = model.fit(
-        X_train, y_train,
-        validation_data=(X_val, y_val),
-        epochs=params["epochs"],
-        batch_size=params["batch_size"],
-        verbose=2
-    )
-    val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
+    mlflow.tensorflow.autolog()
+    mlflow.set_experiment("Proyecto3_TensorFlow")
+
+    with mlflow.start_run():
+        run_name = (
+            f"MLP_dense{params.get('dense_units',64)}_"
+            f"blocks{params.get('dense_blocks',2)}_"
+            f"act{params.get('activation','relu')}"
+        )
+        mlflow.set_tag("run_name", run_name)
+
+        history = model.fit(
+            X_train, y_train,
+            validation_data=(X_val, y_val),
+            epochs=params["epochs"],
+            batch_size=params["batch_size"],
+            verbose=2
+        )
+
+        val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
+        mlflow.log_metric("final_val_accuracy", val_acc)
+        mlflow.log_metric("final_val_loss", val_loss)
+        mlflow.tensorflow.log_model(model, artifact_path="mlp_model")
+
     return history, model, val_acc, val_loss

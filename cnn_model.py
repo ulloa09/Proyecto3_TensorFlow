@@ -71,6 +71,8 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
 
     # MLFlow autolog
     mlflow.tensorflow.autolog()
+    mlflow.set_experiment("Proyecto3_TensorFlow")
+
 
     with mlflow.start_run():
         run_name = (
