@@ -200,7 +200,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
     results = pd.DataFrame()
-    results['Portfolio'] = portfolio_value[-1]
+    results['FinalPortfolioVal'] = df['value'].tail(1)
     results['Sharpe'] = sharpe_anual
     results['Calmar'] = calmar
     results['Sortino'] = sortino
@@ -211,6 +211,6 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
     # Si se pasan parámetros, se devuelve Calmar, la serie de valores del portafolio y el DataFrame de resultados.
     print(results)
-    print(f"Terminando con cash:{cash:.4f}, valor final port:{portfolio_value[-1]:.4f} \ntotal moves hold:{hold}, total de operaciones:{total_ops}")
+    print(f"Terminando con cash:{cash:.4f}, valor final port:{portfolio_value[-1]:.4f} \ntotal moves sin hold:{sell+buy}, total de operaciones:{total_ops}")
 
     return cash, portfolio_value, buy, sell, hold, total_ops

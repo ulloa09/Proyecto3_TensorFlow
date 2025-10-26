@@ -39,10 +39,10 @@ def build_cnn_model(params, input_shape, n_classes):
 
     # Aplastar a vector
     model.add(tf.keras.layers.Flatten())
-
+    model.add(tf.keras.layers.Dropout(dropout_rate))
     # Capa densa intermedia
     model.add(tf.keras.layers.Dense(dense_units, activation=activation))
-    model.add(tf.keras.layers.Dropout(dropout_rate))
+
 
     # Capa de salida
     model.add(tf.keras.layers.Dense(n_classes, activation="softmax"))
@@ -102,53 +102,6 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         mlflow.tensorflow.log_model(model, artifact_path="cnn_model")
 
     return history, model, final_val_acc, final_val_loss
-
-
-
-def test_multiple_cnn_configs(params_space, X_train_seq, y_train, X_val_seq, y_val, class_weights):
-    """
-    Entrena varios modelos CNN1D con distintas configuraciones de hiperparámetros
-    y devuelve el mejor modelo según accuracy de validación.
-    """
-
-    best_acc = -np.inf
-    best_model = None
-    best_params = None
-
-    for params in params_space:
-        # Agrega class_weight al diccionario
-        params["class_weight"] = class_weights
-
-        print(f"\nEntrenando modelo con parámetros: {params}\n")
-
-        # Construir modelo
-        model = build_cnn_model(
-            params=params,
-            input_shape=X_train_seq.shape[1:],
-            n_classes=3
-        )
-
-        # Entrenar modelo
-        history, trained_model, acc, loss = train_cnn_model(
-            model,
-            X_train_seq, y_train,
-            X_val_seq, y_val,
-            params
-        )
-
-        print(f"Final val_acc={acc:.4f}, val_loss={loss:.4f}")
-
-        # Guardar mejor modelo
-        if acc > best_acc:
-            best_acc = acc
-            best_model = trained_model
-            best_params = params
-
-    print(f"\n=== Mejor modelo encontrado ===")
-    print(f"Params: {best_params}")
-    print(f"Validation Accuracy: {best_acc:.4f}")
-
-    return best_model, best_params, best_acc
 
 
 def reshape_cnn(X_train, X_test, X_val):
