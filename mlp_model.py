@@ -33,6 +33,8 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
     mlflow.tensorflow.autolog()
     mlflow.set_experiment("Proyecto3_TensorFlow")
 
+    class_weights = params.get("class_weights")
+
     with mlflow.start_run():
         run_name = (
             f"MLP_dense{params.get('dense_units',64)}_"
@@ -43,11 +45,11 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
 
         history = model.fit(
             X_train, y_train,
- 
             validation_data=(X_val, y_val),
             epochs=params["epochs"],
             batch_size=params["batch_size"],
-            verbose=2
+            verbose=2,
+            class_weight=class_weights,
         )
 
         val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)

@@ -218,7 +218,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
 
     # - Win Rate
     win_rate = won / (won+lost) if (won+lost) > 0 else 0
-    total_ops = won + lost # Total de operaciones cerradas
+    total_ops = won + lost + hold # Total de operaciones cerradas
 
     # --- Preparación de resultados ---
     # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
