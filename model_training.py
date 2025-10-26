@@ -5,7 +5,7 @@ from functions import compute_class_weights
 
 def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
     """
-    Encapsula todo el proceso de entrenamiento y selección de modelos.
+    Encapsula toodo el proceso de entrenamiento y selección de modelos.
     1. Calcula class_weights.
     2. Prepara datos para CNN (reshape).
     3. Entrena y evalúa todas las configuraciones de CNN.
