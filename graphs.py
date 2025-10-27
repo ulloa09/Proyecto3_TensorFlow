@@ -1,121 +1,153 @@
 import matplotlib.pyplot as plt
 import pandas as pd
-from typing import Optional # Import Optional
+from typing import Optional
 
-def plot_portfolio_train(portfolio_series: pd.Series, model_name: str):
-    
-    """
-    1. Plots the portfolio performance on the TRAIN period.
-    
-    Args:
-        portfolio_series (pd.Series): Time series of portfolio value.
-        model_name (str): Name of the model for the title.
-    """
-    plt.figure(figsize=(12, 6))
-    portfolio_series.plot(title=f'Portfolio Value (Train) - Model {model_name}', color='cyan')
-    plt.ylabel('Portfolio Value ($)')
-    plt.xlabel('Date')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_portfolio_test(
-    portfolio_series: pd.Series,
+def plot_portfolio_combined(
+    port_train: pd.Series, 
+    port_test: pd.Series, 
+    port_val: pd.Series, 
     model_name: str,
-    breakpoint_date: Optional[pd.Timestamp] = None # Ensure this argument exists
+    drift_series: Optional[pd.Series] = None
 ):
     """
-    2. Plots the portfolio performance on the TEST period.
-    Optionally includes a vertical line for a drift breakpoint.
+    1. Combines and plots the portfolio performance across all 3 periods.
+    
+    *** NEW ***
+    Includes a secondary Y-axis (twinx) to overlay the evolution
+    of the data drift (count of drifted features) over time.
 
     Args:
-        portfolio_series (pd.Series): Time series of portfolio value.
-        model_name (str): Name of the model for the title.
-        breakpoint_date (pd.Timestamp, optional): Date to draw a vertical line.
+        port_train (pd.Series): Training portfolio series.
+        port_test (pd.Series): Test portfolio series.
+        port_val (pd.Series): Validation portfolio series.
+        model_name (str): The name of the model being plotted.
+        drift_series (Optional[pd.Series]): A time series where the index
+            is the date and the value is the count of drifted features.
     """
-    plt.figure(figsize=(12, 6))
-    portfolio_series.plot(title=f'Portfolio Value (Test) - Model {model_name}', color='orange')
-
-    # Add vertical line if breakpoint_date is provided
-    if breakpoint_date is not None:
-        plt.axvline(
-            x=breakpoint_date,
-            color='red',
-            linestyle='--',
-            linewidth=2,
-            label=f'Drift Point ({breakpoint_date.date()})'
-        )
-        plt.legend() # Show legend only if there is a line
-
-    plt.ylabel('Portfolio Value ($)')
-    plt.xlabel('Date')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_portfolio_validation(
-    portfolio_series: pd.Series,
-    model_name: str,
-    breakpoint_date: Optional[pd.Timestamp] = None # Ensure this argument exists
-):
-    """
-    3. Plots the portfolio performance on the VALIDATION period.
-    Optionally includes a vertical line for a drift breakpoint.
-
-    Args:
-        portfolio_series (pd.Series): Time series of portfolio value.
-        model_name (str): Name of the model for the title.
-        breakpoint_date (pd.Timestamp, optional): Date to draw a vertical line.
-    """
-    plt.figure(figsize=(12, 6))
-    portfolio_series.plot(title=f'Portfolio Value (Validation) - Model {model_name}', color='lightgreen')
-
-    # Add vertical line if breakpoint_date is provided
-    if breakpoint_date is not None:
-        plt.axvline(
-            x=breakpoint_date,
-            color='red',
-            linestyle='--',
-            linewidth=2,
-            label=f'Drift Point ({breakpoint_date.date()})'
-        )
-        plt.legend() # Show legend only if there is a line
-
-    plt.ylabel('Portfolio Value ($)')
-    plt.xlabel('Date')
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_portfolio_combined(port_train: pd.Series, port_test: pd.Series, port_val: pd.Series, model_name: str):
-    """
-    4. Combines and plots the portfolio performance across all 3 periods.
-
-    Args:
-        port_train (pd.Series): Train portfolio time series.
-        port_test (pd.Series): Test portfolio time series.
-        port_val (pd.Series): Validation portfolio time series.
-        model_name (str): Name of the model for the title.
-    """
-    # Concatenate the series. The DatetimeIndex will handle the sorting.
+    # Concatenate the series. The DatetimeIndex will handle the correct order.
     combined_portfolio = pd.concat([port_train, port_test, port_val]).sort_index()
-
-    # Remove duplicates (if the initial index repeats)
     combined_portfolio = combined_portfolio[~combined_portfolio.index.duplicated(keep='last')]
 
-    plt.figure(figsize=(14, 7))
-    combined_portfolio.plot(title=f'Portfolio Value (Combined) - Model {model_name}', color='blue')
+    # --- Setup Plot ---
+    fig, ax1 = plt.subplots(figsize=(14, 7))
+    
+    # --- Plot 1: Portfolio Equity (Left Y-Axis) ---
+    ax1.plot(combined_portfolio.index, combined_portfolio, color='blue', label=f'{model_name} Equity')
+    ax1.set_title(f'Combined Portfolio Value & Data Drift - {model_name}')
+    ax1.set_xlabel('Date')
+    ax1.set_ylabel('Portfolio Value ($)', color='blue')
+    ax1.tick_params(axis='y', labelcolor='blue')
+    ax1.grid(True)
 
+    # --- Add Period Lines (on ax1) ---
+    lines, labels = ax1.get_legend_handles_labels()
+    
+    if not port_train.empty:
+        start_line = ax1.axvline(port_train.index.min(), color='gray', linestyle=':', linewidth=1.5, label='Train Start')
+        lines.append(start_line)
+        labels.append('Train Start')
+    if not port_test.empty:
+        test_line = ax1.axvline(port_test.index.min(), color='darkorange', linestyle='--', linewidth=2, label='Test Start')
+        lines.append(test_line)
+        labels.append('Test Start')
+    if not port_val.empty:
+        val_line = ax1.axvline(port_val.index.min(), color='darkgreen', linestyle='--', linewidth=2, label='Validation Start')
+        lines.append(val_line)
+        labels.append('Validation Start')
+
+    # --- Plot 2: Data Drift (Right Y-Axis) ---
+    if drift_series is not None and not drift_series.empty:
+        ax2 = ax1.twinx()  # Create a second Y-axis
+        ax2.plot(drift_series.index, drift_series, color='red', linestyle=':', alpha=0.7, label='Drifted Features (Count)')
+        ax2.set_ylabel('Count of Drifted Features', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
+        
+        # Get labels from ax2 and add them to ax1's legend
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        lines.extend(lines2)
+        labels.extend(labels2)
+
+    # Show combined legend
+    ax1.legend(lines, labels, loc='best')
+    
+    fig.tight_layout()
+    plt.show()
+
+
+def plot_comparison_with_buy_and_hold(
+    port_train: pd.Series, 
+    port_test: pd.Series, 
+    port_val: pd.Series, 
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    validation_df: pd.DataFrame,
+    model_name: str
+):
+    """
+    2. Plots the strategy equity curve against a Buy & Hold (B&H) strategy.
+    
+    The B&H strategy is calculated independently for each period (Train, Test, Val)
+    and reset to the portfolio's starting capital (1M) for that period.
+
+    Args:
+        port_train (pd.Series): Training portfolio series.
+        port_test (pd.Series): Test portfolio series.
+        port_val (pd.Series): Validation portfolio series.
+        train_df (pd.DataFrame): The *original* (unscaled) training data.
+        test_df (pd.DataFrame): The *original* (unscaled) test data.
+        validation_df (pd.DataFrame): The *original* (unscaled) validation data.
+        model_name (str): The name of the model (e.g., "CNN" or "MLP").
+    """
+    
+    # 1. Combine the strategy equity
+    strategy_equity = pd.concat([port_train, port_test, port_val]).sort_index()
+    strategy_equity = strategy_equity[~strategy_equity.index.duplicated(keep='last')]
+    strategy_equity.name = model_name
+
+    # --- 2. Calculate B&H per Period ---
+    
+    def get_period_buy_and_hold(portfolio_series, price_df):
+        """Helper function to normalize B&H for a single period."""
+        if portfolio_series.empty or price_df.empty:
+            return pd.Series(dtype=float)
+            
+        price_data = price_df.set_index('Date')['Close'].sort_index().dropna()
+        initial_cash = portfolio_series.iloc[0]
+        first_trade_date = portfolio_series.index[1]
+        price_data = price_data[price_data.index >= first_trade_date]
+        
+        if price_data.empty:
+            return pd.Series(dtype=float)
+
+        initial_price = price_data.iloc[0]
+        bh_equity = (price_data / initial_price) * initial_cash
+        initial_cash_series = pd.Series([initial_cash], index=[portfolio_series.index[0]])
+        
+        return pd.concat([initial_cash_series, bh_equity])
+
+    # Calculate B&H for each period separately
+    bh_train = get_period_buy_and_hold(port_train, train_df)
+    bh_test = get_period_buy_and_hold(port_test, test_df)
+    bh_val = get_period_buy_and_hold(port_val, validation_df)
+
+    # Combine the three B&H periods
+    buy_and_hold_equity = pd.concat([bh_train, bh_test, bh_val]).sort_index()
+    buy_and_hold_equity = buy_and_hold_equity[~buy_and_hold_equity.index.duplicated(keep='last')]
+    buy_and_hold_equity.name = "Buy & Hold (Per-Period)"
+
+    # --- 3. Plot both series ---
+    plt.figure(figsize=(14, 7))
+    
+    strategy_equity.plot(title='Strategy vs. Buy & Hold (Period-Normalized)', color='blue', label=model_name)
+    buy_and_hold_equity.plot(color='gray', linestyle='--', label='Buy & Hold (Per-Period)')
+    
     # Add vertical lines to mark the zones
     if not port_train.empty:
-        plt.axvline(port_train.index.min(), color='gray', linestyle='--', label='Start Train')
+        plt.axvline(port_train.index.min(), color='gray', linestyle=':', linewidth=1.5, label='Train Start')
     if not port_test.empty:
-        plt.axvline(port_test.index.min(), color='red', linestyle='--', label='Start Test')
+        plt.axvline(port_test.index.min(), color='darkorange', linestyle='--', linewidth=2, label='Test Start')
     if not port_val.empty:
-        plt.axvline(port_val.index.min(), color='green', linestyle='--', label='Start Validation')
+        plt.axvline(port_val.index.min(), color='darkgreen', linestyle='--', linewidth=2, label='Validation Start')
 
     plt.ylabel('Portfolio Value ($)')
     plt.xlabel('Date')
