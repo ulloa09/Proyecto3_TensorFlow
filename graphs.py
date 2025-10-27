@@ -155,3 +155,50 @@ def plot_comparison_with_buy_and_hold(
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+
+
+def plot_labels_over_price(df):
+    """
+    Plot labeled trading signals (0=sell, 1=hold, 2=buy) over the price series.
+
+    This function visualizes where each label occurs along the price curve.
+    It automatically detects the 'Close' and 'target' columns from the given DataFrame
+    and highlights buy/sell/hold points for easier inspection of labeling quality.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing at least the following columns:
+        - 'Close': price series to plot.
+        - 'target': label column where 0=sell, 1=hold, 2=buy.
+
+    Raises
+    ------
+    ValueError
+        If the DataFrame does not contain both 'Close' and 'target' columns.
+    """
+
+    # --- Validate input DataFrame ---
+    if 'Close' not in df.columns or 'target' not in df.columns:
+        raise ValueError("DataFrame must contain both 'Close' and 'target' columns.")
+
+    # --- Initialize plot ---
+    plt.figure(figsize=(12, 6))
+    plt.plot(df['Close'], color='gray', alpha=0.6, label='Price')
+
+    # --- Overlay labeled signals ---
+    plt.scatter(df[df['target'] == 2].index, df[df['target'] == 2]['Close'],
+                color='green', marker='^', label='Buy (2)', s=10, alpha=0.8)
+    plt.scatter(df[df['target'] == 0].index, df[df['target'] == 0]['Close'],
+                color='red', marker='v', label='Sell (0)', s=10, alpha=0.8)
+    plt.scatter(df[df['target'] == 1].index, df[df['target'] == 1]['Close'],
+                color='blue', marker='o', label='Hold (1)', s=10, alpha=0.5)
+
+    # --- Configure plot style ---
+    plt.title('Threshold-Based Labeling Visualization')
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()

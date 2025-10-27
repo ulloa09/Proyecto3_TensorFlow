@@ -30,8 +30,8 @@ SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 # 2. Feature & Labeling Configuration
 # ------------------------------------------------
 FWD_RETURN_HORIZON = 5
-LABEL_LOWER = -0.1
-LABEL_UPPER = 0.002
+LABEL_LOWER = -0.09
+LABEL_UPPER = 0.008
 
 
 # 3. Model Training Configuration
@@ -50,9 +50,9 @@ params_space_cnn = [
 
 # --- MLP Hyperparameter Search Space ---
 mlp_param_space = [
-    {"dense_blocks": 4, "dense_units": 128, "activation": "relu", "dropout": 0.2, "optimizer": "adam", "epochs": 50, "batch_size": 32},
-    {"dense_blocks": 3, "dense_units": 64, "activation": "sigmoid", "dropout": 0.2, "optimizer": "adam", "epochs": 50, "batch_size": 32},
-    {"dense_blocks": 3, "dense_units": 64, "activation": "sigmoid", "dropout": 0.2, "optimizer": "adam", "epochs": 50, "batch_size": 64},
+    {"dense_blocks": 4, "dense_units": 128, "activation": "relu", "dropout": 0.2, "optimizer": "adam", "epochs": 40, "batch_size": 32},
+    {"dense_blocks": 3, "dense_units": 64, "activation": "sigmoid", "dropout": 0.2, "optimizer": "adam", "epochs": 40, "batch_size": 32},
+    {"dense_blocks": 3, "dense_units": 64, "activation": "sigmoid", "dropout": 0.2, "optimizer": "adam", "epochs": 40, "batch_size": 64},
 ]
 
 
@@ -80,7 +80,7 @@ N_SPLITS_WF = 5 # Number of folds for the walk-forward evaluation
 # ------------------------------------------------
 # Set to True to run the full training pipeline in main.py
 # Set to False to load an existing model from MLFlow for analysis in main.py
-TRAIN_NEW_MODEL = False
+TRAIN_NEW_MODEL = True
 
 # Specify the version to load if TRAIN_NEW_MODEL is False
 # This must be a string (e.g., "1", "5", "latest")

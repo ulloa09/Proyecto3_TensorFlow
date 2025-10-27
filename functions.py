@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import compute_class_weight
+
+from graphs import plot_labels_over_price
 from operation_class import Operation
 
 def get_portfolio_value(cash: float, long_ops: list[Operation], short_ops: list[Operation], current_price: float, n_shares: int)-> float:
@@ -94,6 +96,9 @@ def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) ->
 
     print(f"Labels generated: {len(df)}")
     print(f"Class distribution:\n{np.round(df.target.value_counts(normalize=True), 5)}")
+
+    plot_labels_over_price(df)
+
     return df
 
 def prepare_xy(train_df, val_df, test_df, exclude_cols=None):
