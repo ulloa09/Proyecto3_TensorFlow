@@ -1,6 +1,7 @@
 import tensorflow as tf
 from keras.src.metrics import Recall, Precision
 import mlflow
+import config # Import the master configuration file
 
 def build_mlp_model(params, input_shape, num_classes):
     """
@@ -37,7 +38,6 @@ def build_mlp_model(params, input_shape, num_classes):
 def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
     """
     Trains the MLP model and logs metrics with MLFlow.
-
     Args:
         model (tf.keras.Model): The model to train.
         X_train (np.ndarray): Training features.
@@ -52,9 +52,8 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
             - final_val_acc (float): Final validation accuracy.
             - final_val_loss (float): Final validation loss.
     """
-    # MLFlow autolog is removed to allow explicit control
-    # mlflow.tensorflow.autolog()
-    mlflow.set_experiment("Proyecto3_TensorFlow") # Ensure experiment name is set
+    # Set experiment name from config
+    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
 
     class_weights = params.get("class_weights") # Get class weights if provided
 

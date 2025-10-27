@@ -1,28 +1,34 @@
 import pandas as pd
+import config # Import the master configuration file
 from preprocess_features import fechas, fit_scalers, apply_scalers
 from features import generate_features
-# *** MODIFIED: No longer need compute_thresholds here ***
 from functions import make_forward_return, label_by_thresholds, prepare_xy
 from split import split_dfs
 
-# *** REVERTED: Changed args from lower_q/upper_q back to lower/upper ***
-def load_and_prepare_data(csv_path: str, horizon: int, lower: float, upper: float, split_ratios: dict):
+# *** MODIFIED: Function signature changed ***
+# This function no longer requires arguments as it imports
+# them directly from the config.py file.
+def load_and_prepare_data():
     """
     Encapsulates data loading, feature generation, labeling, and splitting.
     (Using fixed value thresholds for labeling)
+    
+    This function reads its parameters (path, horizon, thresholds, splits)
+    directly from the 'config.py' file.
 
-    Args:
-        csv_path (str): Path to the raw CSV data.
-        horizon (int): Horizon for forward return calculation.
-        lower (float): Fixed value threshold for 'Sell' label.
-        upper (float): Fixed value threshold for 'Buy' label.
-        split_ratios (dict): Dictionary defining the train/test/validation split percentages.
     Returns:
         tuple:
             - train_df (pd.DataFrame): Training data.
             - test_df (pd.DataFrame): Test data.
             - validation_df (pd.DataFrame): Validation data.
     """
+    # Load parameters from config
+    csv_path = config.DATA_CSV_PATH
+    horizon = config.FWD_RETURN_HORIZON
+    lower = config.LABEL_LOWER
+    upper = config.LABEL_UPPER
+    split_ratios = config.SPLIT_RATIOS
+    
     # Load data
     datos = pd.read_csv(csv_path)
     # Create date features
@@ -32,7 +38,7 @@ def load_and_prepare_data(csv_path: str, horizon: int, lower: float, upper: floa
     # Calculate future return (forward return)
     datos = make_forward_return(datos, horizon=horizon)
     
-    # *** REVERTED: Call label_by_thresholds directly, no compute_thresholds ***
+    # Call label_by_thresholds directly
     datos = label_by_thresholds(datos, lower_thr=lower, upper_thr=upper)
     
     # Drop NAs created by feature generation
@@ -95,10 +101,10 @@ def prepare_xy_data(train_scaled, val_scaled, test_scaled):
     Returns:
         tuple:
             - X_train, X_val, X_test (np.ndarray): Feature arrays.
-            - y_train, y_val, y_test (np.ndarray): Label arrays.
+            - y_train, y_val (np.ndarray): Label arrays. (y_test is removed)
             - feature_cols (list): List of feature names.
     """
     # Separation into x, y for train, test, and validation
-    X_train, X_val, X_test, y_train, y_val, y_test, feature_cols = prepare_xy(train_scaled, val_scaled, test_scaled)
+    X_train, X_val, X_test, y_train, y_val, feature_cols = prepare_xy(train_scaled, val_scaled, test_scaled)
     
-    return X_train, X_val, X_test, y_train, y_val, y_test, feature_cols
+    return X_train, X_val, X_test, y_train, y_val, feature_cols

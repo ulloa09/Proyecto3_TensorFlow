@@ -2,27 +2,25 @@
 Walk-Forward Model Evaluation
 
 This script performs a robust evaluation of the final, trained deep learning
-model using a walk-forward methodology. It does NOT perform optimization.
+model using a walk-forward methodology.
+It does NOT perform optimization.
 
 The workflow is:
-1.  Load and split data into Train (60%) and an Evaluation set (40% Test+Val).
-2.  Train the best-performing model (MLP or CNN, as selected by
-    'train_and_select_best_model') on the 60% Train set *only*.
-3.  Use the fixed strategy parameters from the `BACKTEST_PARAMS` dictionary.
-4.  Apply TimeSeriesSplit to the 40% Evaluation set to create multiple
-    sequential "folds".
+1.  Load and split data (using config.py).
+2.  Train the best-performing model on the Train set *only*.
+3.  Use the fixed strategy parameters (from config.py).
+4.  Apply TimeSeriesSplit to the Evaluation set (Test + Val).
 5.  For each fold:
-    a. Use the *single trained model* to generate predictions for that fold's
-       test data.
-    b. Run the backtest on those predictions using the fixed parameters.
-6.  Aggregate the metrics from all folds and plot a single, continuous
-    equity curve representing the total walk-forward performance.
+    a. Use the *single trained model* to generate predictions.
+    b. Run the backtest on those predictions.
+6.  Aggregate metrics and plot the continuous equity curve.
 """
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
+import config # Import the master configuration file
 
 # 1. Import project-specific functions
 try:
@@ -39,55 +37,36 @@ except ImportError:
     print("Error: Make sure all required .py files (data_pipeline, model_training, etc.) are in the same directory.")
     exit()
 
-# --- Project Configuration (copied from main.py) ---
-DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
-FWD_RETURN_HORIZON = 5
-lower = -0.1
-upper = 0.002
-SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
-
-# --- Fixed Strategy Parameters (NO OPTIMIZATION) ---
-# These are the parameters you would have in main.py
-BACKTEST_PARAMS = {
-    'stop_loss': 0.3,
-    'take_profit': 0.3,
-    'n_shares': 30
-}
-
-# Number of folds for the walk-forward evaluation
-N_SPLITS = 5 
+# --- Project Configuration (from config.py) ---
+# All parameters are now loaded from the config file
+BACKTEST_PARAMS = config.BACKTEST_PARAMS
+N_SPLITS = config.N_SPLITS_WF
 
 def run_walk_forward_evaluation():
     """
     Executes the entire walk-forward evaluation process.
     """
     
-    print("--- 1. Loading and Splitting Data ---")
-    # Load original (unscaled) dataframes
-    train_df, test_df, validation_df = load_and_prepare_data(
-        csv_path=DATA_CSV_PATH,
-        horizon=FWD_RETURN_HORIZON,
-        lower=lower,
-        upper=upper,
-        split_ratios=SPLIT_RATIOS
-    )
+    print("--- 1. Loading and Splitting Data (from config) ---")
+    # This function now reads its parameters from config.py
+    train_df, test_df, validation_df = load_and_prepare_data()
     
     print("--- 2. Scaling Data ---")
-    # Scale data
     train_scaled, test_scaled, val_scaled = scale_data(
         train_df, test_df, validation_df
     )
     
     print("--- 3. Preparing X/y Sets ---")
-    # Prepare X/y arrays
-    X_train, X_val, X_test, y_train, y_val, y_test, _ = prepare_xy_data(
+    # y_test is no longer returned
+    X_train, X_val, X_test, y_train, y_val, _ = prepare_xy_data(
         train_scaled, val_scaled, test_scaled
     )
     
     print("--- 4. Training Best Model (on 60% Train Set) ---")
     # Train and select the single best model (MLP or CNN)
-    best_model, model_name, X_train_final, X_test_final, X_val_final = train_and_select_best_model(
-        X_train, X_val, X_test, y_train, y_val, y_test
+    # y_test is no longer passed
+    best_model, model_name, X_train_final, X_test_final, X_val_final, _ = train_and_select_best_model(
+        X_train, X_val, X_test, y_train, y_val
     )
     
     print(f"\n--- 5. Model Trained: {model_name} ---")
@@ -133,11 +112,13 @@ def run_walk_forward_evaluation():
 
         # --- Run Backtest ---
         try:
-            cash, port_series, _, _, _, _ = backtest(
+            # Pass parameters from the config-loaded dictionary
+            cash, port_series, _, _, _, _, _ = backtest( # Added one _ for new drift_series return
                 fold_backtest_df, 
                 stop_loss=BACKTEST_PARAMS['stop_loss'], 
                 take_profit=BACKTEST_PARAMS['take_profit'], 
                 n_shares=BACKTEST_PARAMS['n_shares']
+                # Note: We are not running dynamic drift inside the walk-forward
             )
             
             if port_series.empty or len(port_series) < 2:

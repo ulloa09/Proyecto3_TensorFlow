@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 import mlflow
 import pandas as pd
+import config # Import the master configuration file
 from keras.src.metrics import Precision, Recall
 
 
@@ -84,9 +85,8 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
     epochs     = params.get("epochs", 20)
     class_weight = params.get("class_weight")
 
-    # MLFlow autolog is removed to allow explicit control
-    # mlflow.tensorflow.autolog() 
-    mlflow.set_experiment("Proyecto3_TensorFlow") # Ensure experiment name is set
+    # Set experiment name from config
+    mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME) 
 
 
     with mlflow.start_run():
