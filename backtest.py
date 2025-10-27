@@ -2,18 +2,31 @@
 import numpy as np
 import pandas as pd
 import ta
+# Import the p-value calculator
+from data_drift import get_feature_pvalues
 
 from metrics import annualized_sharpe, annualized_calmar, annualized_sortino, win_rate, maximum_drawdown
 from functions import get_portfolio_value
 from operation_class import Operation
 
 
-def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
+def backtest(
+    data, 
+    stop_loss: float, 
+    take_profit: float, 
+    n_shares: float,
+    baseline_features: pd.DataFrame = None, 
+    monitoring_features: pd.DataFrame = None, 
+    drift_window: int = 90, 
+    drift_step: int = 21, 
+    drift_threshold: float = 0.05
+):
     """
     Vectorized backtesting engine for a trading strategy.
-
     Iterates through historical data, simulates trades based on 'target' signals,
     and calculates portfolio value and performance metrics.
+    
+    Includes dynamic data drift calculation if feature sets are provided.
 
     Args:
         data (pd.DataFrame): DataFrame containing OHLC data and a 'target' column
@@ -21,6 +34,13 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
         stop_loss (float): Percentage (e.g., 0.05 for 5%) for stop loss.
         take_profit (float): Percentage (e.g., 0.10 for 10%) for take profit.
         n_shares (float): Number of shares to trade per operation.
+        baseline_features (pd.DataFrame, optional): The reference feature set (e.g., train) 
+                                                    for drift comparison.
+        monitoring_features (pd.DataFrame, optional): The feature set being backtested
+                                                      (e.g., test or val) to check against baseline.
+        drift_window (int): The number of days for each drift check window.
+        drift_step (int): The number of days to move the window forward.
+        drift_threshold (float): The p-value threshold to consider a feature "drifted".
 
     Returns:
         tuple:
@@ -30,6 +50,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
             - sell (int): Total sell operations.
             - hold (int): Total hold signals.
             - total_ops (int): Total closed operations (wins + losses).
+            - drift_series (pd.Series): Time series of drifted feature counts.
     """
     
     # --- Initial DataFrame preparation ---
@@ -47,7 +68,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     if historic.empty:
         print("Backtest Error: DataFrame empty after dropna.")
         # Return an empty, formatted Series to avoid errors
-        return 1_000_000, pd.Series(dtype=float), 0, 0, 0, 0
+        return 1_000_000, pd.Series(dtype=float), 0, 0, 0, 0, pd.Series(dtype=float)
           
     
     # --- Generate buy and sell signals based on the target column ---
@@ -86,10 +107,18 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     sell = 0
     hold = 0
     
+    # --- Drift calculation initialization ---
+    drift_counts = []
+    window_end_dates = []
+    # Ensure monitoring_features index is aligned if provided
+    if monitoring_features is not None:
+        monitoring_features = monitoring_features.reset_index(drop=True)
+    
     last_row = None # To store the last row for final closing
 
     # --- Iterate over each row of the history to simulate operations ---
-    for row in historic.itertuples(index=False): 
+    # We use enumerate to get an index 'i' for drift windowing
+    for i, row in enumerate(historic.itertuples(index=False)): 
         last_row = row # Save last row for closing positions at the end
 
         # --- Closing LONG positions ---
@@ -101,6 +130,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
                 fee = (row.Close) * position.n_shares * COM
                 pnl = ((row.Close - position.price) * position.n_shares) - fee
   
+    
                 # Close the position
                 cash += row.Close * position.n_shares 
                 # Check if it was a win or loss
@@ -127,6 +157,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
                 fee = row.Close * position.n_shares * COM
                 pnl = ((position.price - row.Close) * position.n_shares) - fee
   
+    
                 # Close the position (add PNL to cash)
                 cash += pnl 
                 if pnl > 0:
@@ -147,6 +178,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
                 cash -= cost
                 buy += 1
             
+ 
                 # Add new operation to the active list
                 active_long_positions.append(Operation(
                         time=row.Datetime,
@@ -169,7 +201,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
             if cash > cost:
                 cash -= cost
                 sell += 1
-             
+  
                 # Add new operation to the active list
                 active_short_positions.append(Operation(
                         time=row.Datetime,
@@ -191,6 +223,30 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
         )
         portfolio_value.append(current_port_val)
         portfolio_dates.append(row.Datetime) # Register the date
+
+        # --- Dynamic Data Drift Check ---
+        # This check runs inside the backtest loop, using the current iteration 'i'
+        if baseline_features is not None and monitoring_features is not None:
+            # Check if this is a step point and if we have enough data
+            current_step = i + 1
+            if current_step >= drift_window and (current_step - drift_window) % drift_step == 0:
+                
+                # Define the window of monitoring data
+                start_idx = i - drift_window + 1
+                end_idx = i + 1 # iloc is exclusive, so this includes index 'i'
+                
+                # Ensure we do not slice with out-of-bounds indices
+                if start_idx >= 0 and end_idx <= len(monitoring_features):
+                    window_df = monitoring_features.iloc[start_idx:end_idx]
+                    
+                    # Get p-values by comparing the window to the baseline
+                    p_values = get_feature_pvalues(baseline_features, window_df)
+                    
+                    # Count how many features have drifted
+                    drift_count = sum(1 for p in p_values.values() if p < drift_threshold)
+                    
+                    drift_counts.append(drift_count)
+                    window_end_dates.append(row.Datetime)
 
     # --- Close all open positions at the end of the backtest ---
     if last_row:
@@ -230,7 +286,7 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     # Calculate statistical metrics to evaluate the strategy:
     # - Annualized Sharpe: measures risk-adjusted return.
     # - Annualized Calmar: measures return adjusted for maximum drawdown.
-    # - Annualized Sortino: measures return adjusted for downside volatility.
+    # - AnnualS ortino: measures return adjusted for downside volatility.
     mean_t = df.rets.mean()
     std_t = df.rets.std()
     values_port_for_metrics = df['value']
@@ -257,8 +313,14 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     portfolio_series = pd.Series(portfolio_value, index=portfolio_dates)
     portfolio_series = portfolio_series[~portfolio_series.index.duplicated(keep='last')] # Remove duplicates
 
+    # --- Finalize Drift Series ---
+    drift_series = pd.Series(dtype=float) # Default empty series
+    if window_end_dates:
+        drift_series = pd.Series(drift_counts, index=pd.to_datetime(window_end_dates))
+        drift_series.name = "Drifted Features Count"
+
     # --- Function output ---
     print(results)
     print(f"Finishing with cash:{cash:.4f}, final portfolio value:{portfolio_value[-1]:.4f} \ntotal moves (buy+sell):{sell+buy}, total closed ops:{total_ops}")
 
-    return cash, portfolio_series, buy, sell, hold, total_ops
+    return cash, portfolio_series, buy, sell, hold, total_ops, drift_series

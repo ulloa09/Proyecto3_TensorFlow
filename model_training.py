@@ -1,7 +1,50 @@
 import numpy as np
+import mlflow
 from cnn_model import build_cnn_model, train_cnn_model, reshape_cnn
 from mlp_model import build_mlp_model, train_mlp_model
 from functions import compute_class_weights
+# Imports needed for standalone execution
+from data_pipeline import load_and_prepare_data, scale_data, prepare_xy_data
+
+
+# Define a consistent name for the registered model in MLFlow
+BEST_MODEL_NAME = "SystematicTradingModel" 
+
+def register_model_mlflow(model, descriptive_name):
+    """
+    Registers the best model with a consistent name in MLFlow
+    and adds its descriptive name (e.g., "CNN_...") as a tag.
+
+    Args:
+        model (tf.keras.Model): The winning model object.
+        descriptive_name (str): The descriptive name (e.g., "MLP_dense...")
+    """
+    try:
+        print(f"\nRegistering model to MLFlow as: {BEST_MODEL_NAME}")
+        
+        # Log and register the model under the consistent name
+        model_info = mlflow.tensorflow.log_model(
+            model,
+            artifact_path="model",
+            registered_model_name=BEST_MODEL_NAME
+        )
+        
+        # Add the descriptive name as a tag to the new model version
+        # This allows the main.py script to know if it's a CNN or MLP
+        client = mlflow.tracking.MlflowClient()
+        client.set_model_version_tag(
+            name=BEST_MODEL_NAME,
+            version=model_info.model_version,
+            key="model_type",
+            value=descriptive_name
+        )
+        
+        print(f"✅ Successfully registered model '{BEST_MODEL_NAME}' version {model_info.model_version}")
+        print(f"   Model Type Tag: {descriptive_name}")
+
+    except Exception as e:
+        print(f"Error registering model: {e}")
+
 
 def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
     """
@@ -11,8 +54,9 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
     3. Trains and evaluates all CNN configurations.
     4. Trains and evaluates all MLP configurations.
     5. Compares and selects the best model (MLP vs. CNN) based on validation accuracy.
-    6. Returns the winning model and the final X datasets (with the correct shape).
-
+    6. Registers the winning model to MLFlow.
+    7. Returns the winning model, its name, accuracy, and the final X datasets.
+    
     Args:
         X_train (np.ndarray): 2D Training features.
         X_val (np.ndarray): 2D Validation features.
@@ -28,6 +72,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
             - X_train_final (np.ndarray): Training features in the correct shape (2D or 3D).
             - X_test_final (np.ndarray): Test features in the correct shape.
             - X_val_final (np.ndarray): Validation features in the correct shape.
+            - best_model_accuracy (float): The validation accuracy of the winning model.
     """
     
     # 1. Class balancing
@@ -123,10 +168,14 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
 
 
     # === 5. & 6. FINAL MODEL SELECTION AND EXECUTION ===
+    
+    # This will store the final accuracy of the best model
+    best_model_accuracy = -1.0
 
     # Determine the winning model (MLP or CNN)
     if best_acc_mlp > best_acc_cnn:
-        print("\n🏆 Winning Model: MLP")
+        best_model_accuracy = best_acc_mlp
+        print(f"\n🏆 Winning Model: MLP (Val Acc: {best_model_accuracy:.4f})")
         best_model = best_model_mlp
         best_params = best_params_mlp
         model_name = f"MLP_dense{best_params.get('dense_blocks',2)}_units{best_params.get('dense_units',64)}"
@@ -135,7 +184,8 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
         X_test_final = X_test
         X_val_final = X_val
     else:
-        print("\n🏆 Winning Model: CNN")
+        best_model_accuracy = best_acc_cnn
+        print(f"\n🏆 Winning Model: CNN (Val Acc: {best_model_accuracy:.4f})")
         best_model = best_model_cnn
         best_params = best_params_cnn
         model_name = f"CNN1D_filters{best_params.get('num_filters',32)}_blocks{best_params.get('conv_blocks',2)}"
@@ -144,4 +194,60 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val, y_test):
         X_test_final = X_test_r
         X_val_final = X_val_r
         
-    return best_model, model_name, X_train_final, X_test_final, X_val_final
+    # --- 6. Register the winning model to MLFlow ---
+    if best_model is not None:
+        register_model_mlflow(best_model, model_name)
+    else:
+        print("Error: No best model was selected. Skipping registration.")
+        model_name = None # Ensure model_name is None if no model
+        
+    return best_model, model_name, X_train_final, X_test_final, X_val_final, best_model_accuracy
+
+
+if __name__ == "__main__":
+    """
+    This block allows the script to be run directly
+    (e.g., `python model_training.py`) to perform the full
+    data prep, model training, and MLFlow registration process.
+    """
+    
+    # --- Configuration Constants (from main.py) ---
+    DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
+    FWD_RETURN_HORIZON = 5
+    lower = -0.1
+    upper = 0.002
+    SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
+    
+    print("--- 1. Loading and Preparing Data ---")
+    train_df, test_df, validation_df = load_and_prepare_data(
+        csv_path=DATA_CSV_PATH,
+        horizon=FWD_RETURN_HORIZON,
+        lower=lower,
+        upper=upper,
+        split_ratios=SPLIT_RATIOS
+    )
+
+    print("\n--- 2. Scaling Features ---")
+    train_scaled, test_scaled, val_scaled = scale_data(
+        train_df, test_df, validation_df
+    )
+
+    print("\n--- 3. Preparing X/y ---")
+    X_train, X_val, X_test, y_train, y_val, y_test, feature_cols = prepare_xy_data(
+        train_scaled, val_scaled, test_scaled
+    )
+    
+    print("\n--- 4. Starting Model Training, Selection, and Registration ---")
+    # This function now handles training, selection, and MLFlow registration
+    # Capture the returned 'best_acc'
+    best_model, model_name, _, _, _, best_acc = train_and_select_best_model(
+        X_train, X_val, X_test, y_train, y_val, y_test
+    )
+    
+    print("\n--- Training Script Finished ---")
+    if model_name:
+        # Print the model name and its validation accuracy
+        print(f"✅ Best model selected: {model_name} (Val Acc: {best_acc:.4f})")
+        print(f"✅ Model registered in MLFlow as '{BEST_MODEL_NAME}'")
+    else:
+        print("❌ Training script completed, but no model was selected or registered.")
