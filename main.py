@@ -7,14 +7,14 @@ from analysis import run_data_drift_analysis, run_backtest_and_plots
 # Configuración de Carga y Features
 DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
 FWD_RETURN_HORIZON = 5
-lower = -0.002
+lower = -0.1
 upper = 0.002
 SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 
 # Configuración del Backtest
 BACKTEST_PARAMS = {
     'stop_loss': 0.2,
-    'take_profit': 0.2,
+    'take_profit': 0.1,
     'n_shares': 30
 }
 
