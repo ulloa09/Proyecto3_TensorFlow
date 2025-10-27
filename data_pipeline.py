@@ -16,8 +16,6 @@ def load_and_prepare_data(csv_path: str, horizon: int, lower: float, upper: floa
     datos = generate_features(datos)
     # Calcular rendimiento futuro (forward return)
     datos = make_forward_return(datos, horizon=horizon)
-    # Definir umbrales dinámicos (percentiles)
-    #lower_thr, upper_thr = compute_thresholds(datos, lower_q=lower_q, upper_q=upper_q)
     # Asignar etiquetas
     datos = label_by_thresholds(datos, lower_thr=lower, upper_thr=upper)
     # Drop de NAs
