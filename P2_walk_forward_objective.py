@@ -42,8 +42,8 @@ except ImportError:
 # --- Project Configuration (copied from main.py) ---
 DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
 FWD_RETURN_HORIZON = 5
-LABEL_LOWER_Q = 0.2
-LABEL_UPPER_Q = 0.8
+lower = -0.1
+upper = 0.002
 SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 
 # --- Fixed Strategy Parameters (NO OPTIMIZATION) ---
@@ -67,8 +67,8 @@ def run_walk_forward_evaluation():
     train_df, test_df, validation_df = load_and_prepare_data(
         csv_path=DATA_CSV_PATH,
         horizon=FWD_RETURN_HORIZON,
-        lower_q=LABEL_LOWER_Q,
-        upper_q=LABEL_UPPER_Q,
+        lower=lower,
+        upper=upper,
         split_ratios=SPLIT_RATIOS
     )
     
