@@ -1,3 +1,9 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import TimeSeriesSplit
+import config # Import the master configuration file
+
 """
 Walk-Forward Model Evaluation
 
@@ -16,11 +22,6 @@ The workflow is:
 6.  Aggregate metrics and plot the continuous equity curve.
 """
 
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.model_selection import TimeSeriesSplit
-import config # Import the master configuration file
 
 # 1. Import project-specific functions
 try:

@@ -30,7 +30,7 @@ SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 # 2. Feature & Labeling Configuration
 # ------------------------------------------------
 FWD_RETURN_HORIZON = 5
-LABEL_LOWER = -0.075
+LABEL_LOWER = -0.1
 LABEL_UPPER = 0.008
 
 
@@ -63,7 +63,7 @@ mlp_param_space = [
 BACKTEST_PARAMS = {
     'stop_loss': 0.3,
     'take_profit': 0.3,
-    'n_shares': 30
+    'n_shares': 70
 }
 
 # --- Dynamic Drift Parameters ---
