@@ -5,6 +5,7 @@ import traceback
 import json 
 import config 
 from cnn_model import build_cnn_model, train_cnn_model, reshape_cnn
+from graphs import plot_training_history
 from mlp_model import build_mlp_model, train_mlp_model
 from functions import compute_class_weights
 from data_pipeline import load_and_prepare_data, scale_data, prepare_xy_data
@@ -206,6 +207,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
     best_acc_cnn = -1.0 
     best_model_cnn = None
     best_params_cnn = None
+    best_history_cnn = None
 
     for i, params in enumerate(params_space_cnn, 1):
         print(f"\n🔹 Training CNN configuration: {i}/{len(params_space_cnn)}: {params}")
@@ -220,12 +222,13 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         )
 
         print(f"✅ CNN Model {i} -> val_accuracy: {val_acc_cnn:.4f}, val_loss: {val_loss_cnn:.4f}")
-        results_cnn.append({"config": i, "params": params, "val_acc": val_acc_cnn, "val_loss": val_loss_cnn})
+        results_cnn.append({"config": i, "params": params, "val_acc": val_acc_cnn, "val_loss": val_loss_cnn, "history": history})
 
         if val_acc_cnn > best_acc_cnn:
             best_acc_cnn = val_acc_cnn
             best_model_cnn = trained_model
             best_params_cnn = params
+            best_history_cnn = history
 
     print("\n🏆 Best CNN configuration found:")
     print(best_params_cnn)
@@ -236,15 +239,16 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
 
     # === MULTIPLE MLP CONFIGURATION TEST ===
     results_mlp = []
-    best_acc_mlp = -1.0 
+    best_acc_mlp = -1.0
     best_model_mlp = None
     best_params_mlp = None
+    best_history_mlp = None
 
     for i, params in enumerate(mlp_param_space, 1):
         print(f"\n🔹 Training MLP configuration {i}/{len(mlp_param_space)}: {params}")
 
         params_with_weights = params.copy()
-        params_with_weights['class_weights'] = class_weights 
+        params_with_weights['class_weights'] = class_weights
 
         mlp_model_i = build_mlp_model(params, X_train.shape[1:], 3) # 3 classes
 
@@ -253,26 +257,28 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         )
 
         print(f"✅ MLP {i} -> val_accuracy: {val_acc:.4f}, val_loss: {val_loss:.4f}")
-        results_mlp.append({"config": i, "params": params, "val_acc": val_acc, "val_loss": val_loss})
+        results_mlp.append({"config": i, "params": params, "val_acc": val_acc, "val_loss": val_loss, "history": history})
 
         if val_acc > best_acc_mlp:
             best_acc_mlp = val_acc
             best_model_mlp = trained_model
             best_params_mlp = params
+            best_history_mlp = history
 
     print("\n🏆 Best MLP configuration found:")
     print(best_params_mlp)
 
-
     # === 5. & 6. FINAL MODEL SELECTION AND EXECUTION ===
 
     best_model_accuracy = -1.0
+    best_history = []
 
     if best_acc_mlp > best_acc_cnn:
         best_model_accuracy = best_acc_mlp
         print(f"\n🏆 Winning Model: MLP (Val Acc: {best_model_accuracy:.4f})")
         best_model = best_model_mlp
         best_params = best_params_mlp
+        best_history = best_history_mlp
         model_name = f"MLP_dense{best_params.get('dense_blocks',2)}_units{best_params.get('dense_units',64)}"
         X_train_final = X_train
         X_test_final = X_test
@@ -286,6 +292,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         X_train_final = X_train_r
         X_test_final = X_test_r
         X_val_final = X_val_r
+        best_history = best_history_cnn
 
     # --- 6. Register the winning model to MLFlow ---
     if best_model is not None:
@@ -293,7 +300,9 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         register_model_mlflow(best_model, model_name, best_model_accuracy, best_params)
     else:
         print("Error: No best model was selected. Skipping registration.")
-        model_name = None 
+        model_name = None
+
+    plot_training_history(best_history_cnn, best_history_mlp)
 
     return best_model, model_name, X_train_final, X_test_final, X_val_final, best_model_accuracy
 

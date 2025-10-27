@@ -30,7 +30,7 @@ SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 # 2. Feature & Labeling Configuration
 # ------------------------------------------------
 FWD_RETURN_HORIZON = 5
-LABEL_LOWER = -0.09
+LABEL_LOWER = -0.075
 LABEL_UPPER = 0.008
 
 
