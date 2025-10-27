@@ -1,24 +1,47 @@
 import pandas as pd
 
-# --- Propósito: dividir un DataFrame en Train/Test/Validation manteniendo el orden temporal ---
-def split_dfs(data, train:int, test:int, validation:int):
+# --- Purpose: split a DataFrame into Train/Test/Validation while maintaining temporal order ---
 
-    # --- Validación de proporciones ---
-    # Asegura que los tres porcentajes cubran el 100% del dataset.
-    assert train + test + validation == 100, "La suma de train, test y validation debe ser 100 exacto."
-    # --- Cálculo de índices de corte ---
-    # Define los límites de cada bloque con base en los porcentajes indicados.
+def split_dfs(data: pd.DataFrame, train:int, test:int, validation:int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Splits a time-ordered DataFrame into three sets:
+    Training, Test, and Validation.
+
+    Args:
+        data (pd.DataFrame): The complete, time-sorted DataFrame.
+        train (int): Percentage for the training set (e.g., 60).
+        test (int): Percentage for the test set (e.g., 20).
+        validation (int): Percentage for the validation set (e.g., 20).
+
+    Returns:
+        tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+            - train_df
+            - test_df
+            - validation_df
+    """
+
+    # --- Validate proportions ---
+    # Ensure the three percentages cover 100% of the dataset.
+    assert train + test + validation == 100, "The sum of train, test, and validation must be exactly 100."
+    
+    # --- Calculate cutoff indices ---
+    # Define the boundaries of each block based on the percentages.
     n = len(data)
-    train_corte = int(n * train / 100)
-    test_corte = train_corte + int(n * test / 100)
+    train_cutoff = int(n * train / 100)
+    test_cutoff = train_cutoff + int(n * test / 100)
 
-    # --- Creación de subconjuntos ---
-    # Extrae las particiones en el orden: Train (inicio→train_corte),
-    # Test (train_corte→test_corte) y Validation (test_corte→fin).
-    train_df = data.iloc[:train_corte]
-    test_df = data.iloc[train_corte:test_corte]
-    validation_df = data.iloc[test_corte:]
+    # --- Create subsets ---
+    # Extract the partitions in order: Train (start -> train_cutoff),
+    # Test (train_cutoff -> test_cutoff), and Validation (test_cutoff -> end).
+    train_df = data.iloc[:train_cutoff]
+    test_df = data.iloc[train_cutoff:test_cutoff]
+    validation_df = data.iloc[test_cutoff:]
 
-    # --- Retorno ---
-    # Devuelve las tres particiones para su uso en backtests/evaluaciones.
+    # --- Return ---
+    # Return the three partitions
+    print(f"Data split successfully:")
+    print(f"  Train:      {len(train_df)} rows ({train}%)")
+    print(f"  Test:       {len(test_df)} rows ({test}%)")
+    print(f"  Validation: {len(validation_df)} rows ({validation}%)")
+    
     return train_df, test_df, validation_df

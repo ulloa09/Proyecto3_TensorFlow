@@ -1,4 +1,4 @@
-# Función backtesting
+# Backtesting Function
 import numpy as np
 import pandas as pd
 import ta
@@ -9,205 +9,228 @@ from operation_class import Operation
 
 
 def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
-    # --- Preparación inicial del DataFrame ---
-    # Copia el DataFrame para evitar modificar el original.
+    """
+    Vectorized backtesting engine for a trading strategy.
+
+    Iterates through historical data, simulates trades based on 'target' signals,
+    and calculates portfolio value and performance metrics.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing OHLC data and a 'target' column
+                             (0=Sell, 1=Hold, 2=Buy).
+        stop_loss (float): Percentage (e.g., 0.05 for 5%) for stop loss.
+        take_profit (float): Percentage (e.g., 0.10 for 10%) for take profit.
+        n_shares (float): Number of shares to trade per operation.
+
+    Returns:
+        tuple:
+            - cash (float): Final cash value.
+            - portfolio_series (pd.Series): Time series of portfolio value.
+            - buy (int): Total buy operations.
+            - sell (int): Total sell operations.
+            - hold (int): Total hold signals.
+            - total_ops (int): Total closed operations (wins + losses).
+    """
+    
+    # --- Initial DataFrame preparation ---
+    # Copy the DataFrame to avoid modifying the original.
     data = data.copy()
 
+    # Standardize date column name
     if "Date" in data.columns:
         data.rename(columns={"Date": "Datetime"}, inplace=True)
 
-    # --- Preparación del DataFrame con señales ---
+    # --- Prepare DataFrame with signals ---
     historic = data.copy()
     historic = historic.dropna()
 
     if historic.empty:
-        print("Error de Backtest: DataFrame vacío después de dropna.")
-        # Devolver una Serie vacía pero con formato para evitar errores
+        print("Backtest Error: DataFrame empty after dropna.")
+        # Return an empty, formatted Series to avoid errors
         return 1_000_000, pd.Series(dtype=float), 0, 0, 0, 0
           
-    # --- Generar señales de compra y venta basadas en la columna target ---
+    
+    # --- Generate buy and sell signals based on the target column ---
     historic["buy_signal"] = historic["target"] == 2
     historic["sell_signal"] = historic["target"] == 0
 
-    # --- Inicialización de variables para la simulación ---
-    # COM representa el costo por operación (comisión).
-    # SL y TP son los niveles de stop loss y take profit.
-    # cash es el capital inicial disponible.
-    COM = 0.125 / 100
-    BORROW_RATE = 0.25 / 100
+    # --- Initialization of variables for the simulation ---
+    # COM represents the cost per operation (commission).
+    # SL and TP are the stop loss and take profit levels.
+    # cash is the initial available capital.
+    COM = 0.125 / 100  # Commission rate (0.125%)
+    BORROW_RATE = 0.25 / 100 # Annual borrow rate for shorts
     SL = stop_loss
     TP = take_profit
 
-    days = 252
-    BORROW_DIARIO = BORROW_RATE / days
+    days = 252 # Trading days per year
+    BORROW_DIARIO = BORROW_RATE / days # Daily borrow cost
 
-    cash = 1_000_000
+    cash = 1_000_000 # Initial capital
     
-    # Listas para mantener las posiciones abiertas de tipo LONG y SHORT.
+    # Lists to maintain open LONG and SHORT positions.
     active_long_positions: list[Operation] = [] 
     active_short_positions: list[Operation] = [] 
 
-    # Lista para almacenar el valor total del portafolio en cada paso.
+    # List to store the total portfolio value at each step.
     portfolio_value = [cash] 
-    # Registrar las fechas para el índice de la Serie
+    # Register dates for the Series index
     portfolio_dates = [historic['Datetime'].iloc[0] - pd.Timedelta(days=1)]
 
-    # Listas para almacenar operaciones ganadas y perdidas
+    # Lists to store winning and losing operations
     won = 0
     lost = 0
 
-    # Conteo de señales y operaciones abiertas
+    # Count of signals and open operations
     buy = 0
     sell = 0
     hold = 0
     
-    last_row = None
+    last_row = None # To store the last row for final closing
 
-    # --- Iteración sobre cada fila del histórico para simular operaciones ---
+    # --- Iterate over each row of the history to simulate operations ---
     for row in historic.itertuples(index=False): 
-        last_row = row # Guardar última fila para cierre
+        last_row = row # Save last row for closing positions at the end
 
-        # --- Cierre de posiciones LONG ---
-        # Se verifica si el precio actual alcanza el stop loss o take profit para cerrar la posición.
-        # Se añade el valor de cierre a cash descontando la comisión.
-        for position in active_long_positions[:]: # Iterate over a copy of the list
+        # --- Closing LONG positions ---
+        # Check if the current price hits the stop loss or take profit to close the position.
+        # The closing value is added to cash, deducting commission.
+        for position in active_long_positions[:]: # Iterate over a copy
             if position.stop_loss > row.Close  or position.take_profit < row.Close:
-                # Calcular PNL previo al cierre
+                # Calculate PNL before closing
                 fee = (row.Close) * position.n_shares * COM
                 pnl = ((row.Close - position.price) * position.n_shares) - fee
   
                 # Close the position
                 cash += row.Close * position.n_shares 
-                # Checar si se ganó o se perdió
+                # Check if it was a win or loss
                 if pnl > 0:
-                  
                    won += 1 
                 else:
                     lost += 1 
                 # Remove the position from active positions
                 active_long_positions.remove(position)
 
-         # Costo de operaciones SHORT
-     
+ 
+        # --- Cost of SHORT operations (Daily Borrow Fee) ---
         for position in active_short_positions[:]: 
             magnitud = row.Close * position.n_shares
             costo_cobertura = magnitud * BORROW_DIARIO
-            cash -= costo_cobertura 
+            cash -= costo_cobertura # Deduct daily fee
 
-        # --- Cierre de posiciones SHORT ---
-        # Similar al cierre de LONG, pero con condiciones invertidas para stop loss y take profit.
-        # Se calcula la ganancia o pérdida considerando la diferencia entre precio de entrada y cierre.
-        for position in active_short_positions[:]:  # Iterate over a copy of the list
+        # --- Closing SHORT positions ---
+        # Similar to closing LONG, but with inverted conditions for stop loss and take profit.
+        # Profit or loss is calculated considering the difference between entry and exit price.
+        for position in active_short_positions[:]:  # Iterate over a copy
             if position.stop_loss < row.Close or position.take_profit > row.Close:
-                # Calcular PNL previo al cierre
+                # Calculate PNL before closing
                 fee = row.Close * position.n_shares * COM
                 pnl = ((position.price - row.Close) * position.n_shares) - fee
   
-                # Close the position
+                # Close the position (add PNL to cash)
                 cash += pnl 
                 if pnl > 0:
                     won += 1 
                 else:
-    
                     lost += 1 
                 # Remove the position from active positions
                 active_short_positions.remove(position)
 
 
-        # --- Apertura de nuevas posiciones LONG ---
-        # Si la señal de compra está activa y hay suficiente cash, se abre una posición LONG.
-        # Se descuenta el costo de la operación incluyendo comisión.
+        # --- Opening new LONG positions ---
+        # If the buy signal is active and there is enough cash, open a LONG position.
+        # The cost of the operation, including commission, is deducted.
         if row.buy_signal: 
-            # Descontar el costo
+            # Deduct cost
             cost = row.Close * n_shares * (1 + COM)
             if cash > cost:
                 cash -= cost
                 buy += 1
             
-            active_long_positions.append(Operation(
-                    time=row.Datetime,
-                    price=row.Close,
-                    n_shares=n_shares,
-                    stop_loss=row.Close * (1 - SL),
-            
-                    take_profit=row.Close * (1 + TP),
-                    type='LONG'
-                ))
+                # Add new operation to the active list
+                active_long_positions.append(Operation(
+                        time=row.Datetime,
+                        price=row.Close,
+                        n_shares=n_shares,
+                        stop_loss=row.Close * (1 - SL),
+                        take_profit=row.Close * (1 + TP),
+                        type='LONG'
+                    ))
         if row.target == 1:
-            hold += 1
+            hold += 1 # Count hold signals
 
-        # --- Apertura de nuevas posiciones SHORT ---
-        # Si la señal de venta está activa y hay suficiente cash, se abre una posición SHORT.
-        # Se descuenta el costo de la operación incluyendo comisión.
+       
+        # --- Opening new SHORT positions ---
+        # If the sell signal is active and there is enough cash, open a SHORT position.
+        # The cost of the operation (commission) is deducted.
         if row.sell_signal:
-            # Descontar el costo
-            cost = row.Close * n_shares * (1 + COM)
+            # Deduct cost
+            cost = row.Close * n_shares * (1 + COM) # Commission cost
             if cash > cost:
                 cash -= cost
                 sell += 1
              
-            active_short_positions.append(Operation(
-                    time=row.Datetime,
-                    price = row.Close,
-                    n_shares = n_shares,
-                    stop_loss = row.Close*(1 + SL),
-         
-                    take_profit = row.Close * (1 - TP),
-                    type = 'SHORT'
-                ))
+                # Add new operation to the active list
+                active_short_positions.append(Operation(
+                        time=row.Datetime,
+                        price = row.Close,
+                        n_shares = n_shares,
+                        stop_loss = row.Close*(1 + SL),
+                        take_profit = row.Close * (1 - TP),
+                        type = 'SHORT'
+                    ))
         if row.target == 1:
-            hold += 1
+            hold += 1 # Count hold signals (double counted, fix if needed)
 
-        # --- Actualización del valor del portafolio ---
-     
-        # Se calcula el valor total considerando cash y posiciones abiertas (long y short).
+  
+        # --- Update portfolio value ---
+        # Calculate the total value considering cash and open positions (long and short).
         current_port_val = get_portfolio_value(
             cash, long_ops=active_long_positions, short_ops=active_short_positions,
             current_price=row.Close, n_shares=n_shares,
         )
         portfolio_value.append(current_port_val)
-        portfolio_dates.append(row.Datetime) # Registrar la fecha
+        portfolio_dates.append(row.Datetime) # Register the date
 
-    # --- Cierre de posiciones al final del backtest ---
+    # --- Close all open positions at the end of the backtest ---
     if last_row:
-        # Close long positions
+        # Close remaining long positions
         for position in active_long_positions:
-   
             pnl = (last_row.Close - position.price) * position.n_shares * (1 - COM)
             cash += last_row.Close * position.n_shares * (1 - COM)
-            # Ganó o perdió?
+            # Win or loss?
             if pnl >= 0:
                 won += 1
             else:
                 lost += 1
 
+        # Close remaining short positions
         for position in active_short_positions:
             pnl = (position.price - last_row.Close) * position.n_shares
             short_com = last_row.Close * position.n_shares * COM
-  
-            cash += pnl - short_com
-            # Ganó o perdió?
+            cash += pnl - short_com # Add PNL, subtract commission
+            # Win or loss?
             if pnl >= 0:
                 won += 1
             else:
                 lost += 1
 
 
-    # --- Limpieza de posiciones abiertas al final del backtest ---
+    # --- Clear open positions lists after closing ---
     active_long_positions = []
     active_short_positions = []
 
-    # --- Cálculo de métricas de rendimiento ---
-    # Se crea un DataFrame con el valor del portafolio y los retornos diarios.
+    # --- Calculate performance metrics ---
+    # Create a DataFrame with the portfolio value and daily returns.
     df = pd.DataFrame(index=portfolio_dates)
     df['value'] = portfolio_value
     df['rets'] = df.value.pct_change()
-    df.dropna(subset=['rets'], inplace=True) # Usar subset='rets'
+    df.dropna(subset=['rets'], inplace=True) # Use subset='rets'
 
-    # Se calculan las métricas estadísticas para evaluar la estrategia:
-    # - Sharpe anualizado mide el retorno ajustado al riesgo.
-    # - Calmar anualizado mide retorno ajustado a la máxima caída.
-    # - Sortino anualizado mide retorno ajustado a la volatilidad negativa.
+    # Calculate statistical metrics to evaluate the strategy:
+    # - Annualized Sharpe: measures risk-adjusted return.
+    # - Annualized Calmar: measures return adjusted for maximum drawdown.
+    # - Annualized Sortino: measures return adjusted for downside volatility.
     mean_t = df.rets.mean()
     std_t = df.rets.std()
     values_port_for_metrics = df['value']
@@ -217,27 +240,25 @@ def backtest(data, stop_loss:float, take_profit:float, n_shares:float):
     max_drawdown = maximum_drawdown(values_port_for_metrics)
 
     # - Win Rate
-    win_rate = won / (won+lost) if (won+lost) > 0 else 0
-    total_ops = won + lost + hold # Total de operaciones cerradas
+    win_rate_val = won / (won+lost) if (won+lost) > 0 else 0
+    total_ops = won + lost # Total closed operations
 
-    # --- Preparación de resultados ---
-    # Se crea un DataFrame con el valor final del portafolio y las métricas calculadas.
+    # --- Prepare results ---
+    # Create a DataFrame with the final portfolio value and calculated metrics.
     results = pd.DataFrame()
     results['FinalPortfolioVal'] = df['value'].tail(1)
     results['Sharpe'] = sharpe_anual
     results['Calmar'] = calmar
     results['Sortino'] = sortino
-    results['Win Rate'] = win_rate
+    results['Win Rate'] = win_rate_val
     results['Max Drawdown'] = max_drawdown
 
-    # Crear la Serie de portafolio completa para graficar
+    # Create the complete portfolio Series for plotting
     portfolio_series = pd.Series(portfolio_value, index=portfolio_dates)
-    portfolio_series = portfolio_series[~portfolio_series.index.duplicated(keep='last')]
+    portfolio_series = portfolio_series[~portfolio_series.index.duplicated(keep='last')] # Remove duplicates
 
-    # --- Salida de la función ---
-    # Si no se pasan parámetros, se devuelve solo la métrica Calmar para optimización.
-    # Si se pasan parámetros, se devuelve Calmar, la serie de valores del portafolio y el DataFrame de resultados.
+    # --- Function output ---
     print(results)
-    print(f"Terminando con cash:{cash:.4f}, valor final port:{portfolio_value[-1]:.4f} \ntotal moves sin hold:{sell+buy}, total de operaciones:{total_ops}")
+    print(f"Finishing with cash:{cash:.4f}, final portfolio value:{portfolio_value[-1]:.4f} \ntotal moves (buy+sell):{sell+buy}, total closed ops:{total_ops}")
 
     return cash, portfolio_series, buy, sell, hold, total_ops

@@ -1,29 +1,40 @@
 import yfinance as yf
 import numpy as np
 import pandas as pd
+import os
 
-# Descarga directa y limpia desde cero
+# --- Data Download Script ---
+# This script downloads daily data for the 'WYNN' ticker and saves it
+# to a CSV file, which is the starting point for the pipeline.
+
+# Ensure the 'data' directory exists
+os.makedirs('data', exist_ok=True)
+
+# Direct and clean download from scratch
+print("Downloading WYNN data (2010-2025)...")
 data = yf.download(
     tickers="WYNN",
     start="2010-01-01",
-    end="2025-10-17",
+    end="2025-10-17", # Note: yfinance 'end' is exclusive
     interval="1d",
-    auto_adjust=False,
+    auto_adjust=False, # We want Open, High, Low, Close, Adj Close, Volume
     progress=False,
 )
 
-# Aplana si existe un nivel superior de columnas (por el ticker)
+# Flatten if a MultiIndex is returned (due to the ticker)
 if isinstance(data.columns, pd.MultiIndex):
     data.columns = data.columns.droplevel(1)
 
-# Reiniciar índice
+# Reset index to get 'Date' as a column
 data = data.reset_index()
 
-# Reordenar columnas y eliminar cualquier encabezado falso
+# Reorder columns and ensure standard names
 data = data[['Date', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']]
 
-# Guardar limpio
-data.to_csv('data/wynn_daily_15y.csv', index=False)
+# Save clean data
+output_path = 'data/wynn_daily_15y.csv'
+data.to_csv(output_path, index=False)
 
 print(data.head())
-print(f"Datos descargados: {len(data)} registros entre {data['Date'].min()} y {data['Date'].max()}")
+print(f"Data downloaded: {len(data)} records between {data['Date'].min()} and {data['Date'].max()}")
+print(f"Saved to {output_path}")

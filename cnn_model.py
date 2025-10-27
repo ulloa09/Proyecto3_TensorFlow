@@ -1,4 +1,3 @@
-
 import numpy as np
 import tensorflow as tf
 import mlflow
@@ -8,15 +7,19 @@ from keras.src.metrics import Precision, Recall
 
 def build_cnn_model(params, input_shape, n_classes):
     """
-    Construye una CNN 1D ligera para clasificación multiclase (0=venta,1=hold,2=compra)
-    Pensada para datos financieros tabulares re-formateados como (timesteps, features).
+    Builds a lightweight 1D CNN for multiclass classification (0=sell, 1=hold, 2=buy).
+    Designed for tabular financial data reformatted as (timesteps, features).
 
-    input_shape: tuple (timesteps, n_features)
-    n_classes: número de clases de salida (ej. 3)
-    params: dict con hiperparámetros del modelo
+    Args:
+        params (dict): Dictionary with model hyperparameters.
+        input_shape (tuple): Shape of the input (timesteps, n_features).
+        n_classes (int): Number of output classes (e.g., 3).
+
+    Returns:
+        tf.keras.Model: The compiled CNN model.
     """
 
-    # Hiperparámetros con defaults
+    # Hyperparameters with defaults
     num_filters   = params.get("num_filters", 32)
     kernel_size   = params.get("kernel_size", 3)
     conv_blocks   = params.get("conv_blocks", 2)
@@ -28,33 +31,32 @@ def build_cnn_model(params, input_shape, n_classes):
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Input(shape=input_shape))
 
-    # Bloques convolucionales 1D
+    # 1D Convolutional Blocks
     for _ in range(conv_blocks):
         model.add(tf.keras.layers.Conv1D(
             filters=num_filters,
             kernel_size=kernel_size,
             activation=activation,
-            padding="causal"  # causal respeta el orden temporal cuando luego uses ventanas >1
+            padding="causal"  # 'causal' respects temporal order
         ))
-        model.add(tf.keras.layers.MaxPooling1D(pool_size=1))  # pool_size=1 no altera tamaño ahora
-        # Nota: cuando uses ventanas >1, puedes cambiar pool_size=2 para resumir el pasado
-        #       y va a seguir funcionando
+        model.add(tf.keras.layers.MaxPooling1D(pool_size=1)) # pool_size=1 doesn't alter size
+        # Note: When using windows > 1, you can change pool_size=2
+        #       to summarize the past, and it will still work.
 
-    # Aplastar a vector
+    # Flatten to a vector
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dropout(dropout_rate))
-    # Capa densa intermedia
+    
+    # Intermediate dense layer
     model.add(tf.keras.layers.Dense(dense_units, activation=activation))
 
-
-    # Capa de salida
+    # Output layer
     model.add(tf.keras.layers.Dense(n_classes, activation="softmax"))
 
-    # Compilar
-
+    # Compile the model
     model.compile(
         optimizer=optimizer_name,
-        loss="sparse_categorical_crossentropy",  # etiquetas enteras 0,1,2
+        loss="sparse_categorical_crossentropy",
         metrics=["accuracy"]
     )
 
@@ -63,9 +65,22 @@ def build_cnn_model(params, input_shape, n_classes):
 
 def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
     """
-    Entrena el modelo CNN con MLFlow.
-    Usa train como entrenamiento y test como validación (por ahora).
-    Devuelve history y el modelo entrenado.
+    Trains the CNN model with MLFlow logging.
+
+    Args:
+        model (tf.keras.Model): The model to train.
+        X_train_seq (np.ndarray): Training features.
+        y_train (np.ndarray): Training labels.
+        X_val_seq (np.ndarray): Validation features.
+        y_val (np.ndarray): Validation labels.
+        params (dict): Dictionary with training hyperparameters (epochs, batch_size, etc.).
+
+    Returns:
+        tuple:
+            - history (History): Keras history object.
+            - model (tf.keras.Model): The trained model.
+            - final_val_acc (float): Final validation accuracy.
+            - final_val_loss (float): Final validation loss.
     """
 
     batch_size = params.get("batch_size", 64)
@@ -74,10 +89,11 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
 
     # MLFlow autolog
     mlflow.tensorflow.autolog()
-    mlflow.set_experiment("Proyecto3_TensorFlow")
+    mlflow.set_experiment("Proyecto3_TensorFlow") # Ensure experiment name is set
 
 
     with mlflow.start_run():
+        # Create a descriptive run name
         run_name = (
             f"CNN1D_filters{params.get('num_filters',32)}_"
             f"blocks{params.get('conv_blocks',2)}_"
@@ -86,24 +102,25 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         )
         mlflow.set_tag("run_name", run_name)
 
+        # Train the model
         history = model.fit(
             X_train_seq,
             y_train,
             validation_data=(X_val_seq, y_val),
             epochs=epochs,
             batch_size=batch_size,
-            verbose=2,
+            verbose=2, # Show one line per epoch
             class_weight=class_weight,
         )
 
-        # Métricas finales en validación
+        # Log final metrics
         final_val_acc  = float(history.history["val_accuracy"][-1])
         final_val_loss = float(history.history["val_loss"][-1])
 
         mlflow.log_metric("final_val_accuracy", final_val_acc)
         mlflow.log_metric("final_val_loss", final_val_loss)
 
-        # Guardar el modelo en MLFlow
+        # Save the model to MLFlow
         mlflow.tensorflow.log_model(model, artifact_path="cnn_model")
 
     return history, model, final_val_acc, final_val_loss
@@ -111,34 +128,34 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
 
 def reshape_cnn(X_train, X_test, X_val):
     """
-    Da formato a los datasets para poder usarlos en una CNN 1D sin contexto temporal.
-    Agrega una dimensión ficticia de tiempo (timesteps=1).
+    Formats datasets for use in a 1D CNN without temporal context.
+    Adds a dummy time dimension (timesteps=1).
 
-    Parámetros:
-    -----------
-    X_train, X_test, X_val : np.ndarray o pd.DataFrame
-        Conjuntos de features.
-    y_train, y_test, y_val : np.ndarray o pd.Series
-        Etiquetas correspondientes.
+    Args:
+        X_train (np.ndarray): 2D Training features (samples, features).
+        X_test (np.ndarray): 2D Test features.
+        X_val (np.ndarray): 2D Validation features.
 
-    Retorna:
-    --------
-    X_train_r, y_train, X_test_r, y_test, X_val_r, y_val
-        Los X_* con shape (samples, 1, features)
+    Returns:
+        tuple:
+            - X_train_r (np.ndarray): 3D Training features (samples, 1, features).
+            - X_test_r (np.ndarray): 3D Test features.
+            - X_val_r (np.ndarray): 3D Validation features.
     """
-    # Convertir a arrays
+    
+    # Convert to numpy arrays (if they are pandas DataFrames)
     X_train = np.asarray(X_train)
     X_test = np.asarray(X_test)
     X_val = np.asarray(X_val)
 
-    # Expandir dimensión para CNN 1D
+    # Expand dimension for 1D CNN (samples, timesteps, features)
     X_train_r = np.expand_dims(X_train, axis=1)
     X_test_r = np.expand_dims(X_test, axis=1)
     X_val_r = np.expand_dims(X_val, axis=1)
 
-    # Mostrar shapes resultantes
-    print(f"✅ X_train: {X_train_r.shape}")
-    print(f"✅ X_test:  {X_test_r.shape}")
-    print(f"✅ X_val:   {X_val_r.shape}")
+    # Show resulting shapes
+    print(f"✅ X_train reshaped to: {X_train_r.shape}")
+    print(f"✅ X_test reshaped to:  {X_test_r.shape}")
+    print(f"✅ X_val reshaped to:   {X_val_r.shape}")
 
     return X_train_r, X_test_r, X_val_r
