@@ -44,7 +44,7 @@ def compute_thresholds(ref_df: pd.DataFrame, lower_q: float, upper_q: float) -> 
 
 def label_by_thresholds(df: pd.DataFrame, lower_thr: float, upper_thr: float) -> pd.DataFrame:
     """
-    Etiqueta -1/0/1 usando umbrales fijos (sin recalcular percentiles).
+    Etiqueta 0/1/2 usando umbrales fijos (sin recalcular percentiles).
     """
     df = df.copy()
     if "fwd_ret" not in df.columns:

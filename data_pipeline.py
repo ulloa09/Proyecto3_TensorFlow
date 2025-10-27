@@ -4,7 +4,7 @@ from features import generate_features
 from functions import make_forward_return, compute_thresholds, label_by_thresholds, prepare_xy
 from split import split_dfs
 
-def load_and_prepare_data(csv_path: str, horizon: int, lower_q: float, upper_q: float, split_ratios: dict):
+def load_and_prepare_data(csv_path: str, horizon: int, lower: float, upper: float, split_ratios: dict):
     """
     Encapsula la carga, generación de features, etiquetado y división de datos.
     """
@@ -17,9 +17,9 @@ def load_and_prepare_data(csv_path: str, horizon: int, lower_q: float, upper_q: 
     # Calcular rendimiento futuro (forward return)
     datos = make_forward_return(datos, horizon=horizon)
     # Definir umbrales dinámicos (percentiles)
-    lower_thr, upper_thr = compute_thresholds(datos, lower_q=lower_q, upper_q=upper_q)
+    #lower_thr, upper_thr = compute_thresholds(datos, lower_q=lower_q, upper_q=upper_q)
     # Asignar etiquetas
-    datos = label_by_thresholds(datos, lower_thr, upper_thr)
+    datos = label_by_thresholds(datos, lower_thr=lower, upper_thr=upper)
     # Drop de NAs
     data = datos.copy().dropna()
     # Split de datos
