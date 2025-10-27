@@ -1,6 +1,5 @@
 from data_pipeline import load_and_prepare_data, scale_data, prepare_xy_data
 from model_training import train_and_select_best_model
-# --- MODIFICATION: Import the new dynamic drift calculator ---
 from analysis import run_data_drift_analysis, run_backtest_and_plots, calculate_dynamic_drift_series
 
 # --- Flow Configuration Constants ---
@@ -8,7 +7,6 @@ from analysis import run_data_drift_analysis, run_backtest_and_plots, calculate_
 # Load and Feature Configuration
 DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
 FWD_RETURN_HORIZON = 5
-# *** REVERTED: Using fixed value thresholds ***
 lower = -0.1
 upper = 0.002
 SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
@@ -70,7 +68,7 @@ def main():
         train_scaled, test_scaled, val_scaled, feature_cols
     )
 
-    # --- 6. *** NEW *** Calculate Dynamic Data Drift (for plotting) ---
+    # --- 6. Calculate Dynamic Data Drift (for plotting) ---
     # This uses the scaled data to create a time series of drift evolution
     dynamic_drift_series = calculate_dynamic_drift_series(
         train_scaled, 
