@@ -8,14 +8,15 @@ from analysis import run_data_drift_analysis, run_backtest_and_plots, calculate_
 # Load and Feature Configuration
 DATA_CSV_PATH = 'data/wynn_daily_15y.csv'
 FWD_RETURN_HORIZON = 5
+# *** REVERTED: Using fixed value thresholds ***
 lower = -0.1
 upper = 0.002
 SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 
 # Backtest Configuration
 BACKTEST_PARAMS = {
-    'stop_loss': 0.2,
-    'take_profit': 0.15,
+    'stop_loss': 0.3,
+    'take_profit': 0.3,
     'n_shares': 30
 }
 
@@ -40,6 +41,7 @@ def main():
     train_df, test_df, validation_df = load_and_prepare_data(
         csv_path=DATA_CSV_PATH,
         horizon=FWD_RETURN_HORIZON,
+        # *** REVERTED: Passing 'lower' and 'upper' args ***
         lower=lower,
         upper=upper,
         split_ratios=SPLIT_RATIOS
