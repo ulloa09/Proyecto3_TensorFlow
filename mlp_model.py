@@ -21,7 +21,7 @@ def build_mlp_model(params, input_shape, num_classes):
     model.compile(
         optimizer=params["optimizer"],
         loss="sparse_categorical_crossentropy",
-        metrics=["accuracy", Precision(name="precision"), Recall(name="recall")],
+        metrics=["accuracy"]
     )
     return model
 
