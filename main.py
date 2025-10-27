@@ -14,7 +14,7 @@ SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 # Configuración del Backtest
 BACKTEST_PARAMS = {
     'stop_loss': 0.2,
-    'take_profit': 0.1,
+    'take_profit': 0.15,
     'n_shares': 30
 }
 
