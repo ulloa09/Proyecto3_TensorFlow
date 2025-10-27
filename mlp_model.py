@@ -45,7 +45,6 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
         X_val (np.ndarray): Validation features.
         y_val (np.ndarray): Validation labels.
         params (dict): Dictionary with training hyperparameters.
-
     Returns:
         tuple:
             - history (History): Keras history object.
@@ -53,7 +52,8 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
             - final_val_acc (float): Final validation accuracy.
             - final_val_loss (float): Final validation loss.
     """
-    mlflow.tensorflow.autolog()
+    # MLFlow autolog is removed to allow explicit control
+    # mlflow.tensorflow.autolog()
     mlflow.set_experiment("Proyecto3_TensorFlow") # Ensure experiment name is set
 
     class_weights = params.get("class_weights") # Get class weights if provided
@@ -66,6 +66,9 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
             f"act{params.get('activation','relu')}"
         )
         mlflow.set_tag("run_name", run_name)
+        
+        # Log hyperparameters
+        mlflow.log_params(params)
 
         # Train the model
         history = model.fit(
@@ -82,8 +85,4 @@ def train_mlp_model(model, X_train, y_train, X_val, y_val, params):
         mlflow.log_metric("final_val_accuracy", val_acc)
         mlflow.log_metric("final_val_loss", val_loss)
         
-        # Save the model to MLFlow
-        mlflow.tensorflow.log_model(model, artifact_path="mlp_model")
-
-    
     return history, model, val_acc, val_loss

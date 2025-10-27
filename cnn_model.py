@@ -14,7 +14,6 @@ def build_cnn_model(params, input_shape, n_classes):
         params (dict): Dictionary with model hyperparameters.
         input_shape (tuple): Shape of the input (timesteps, n_features).
         n_classes (int): Number of output classes (e.g., 3).
-
     Returns:
         tf.keras.Model: The compiled CNN model.
     """
@@ -42,7 +41,6 @@ def build_cnn_model(params, input_shape, n_classes):
         model.add(tf.keras.layers.MaxPooling1D(pool_size=1)) # pool_size=1 doesn't alter size
         # Note: When using windows > 1, you can change pool_size=2
         #       to summarize the past, and it will still work.
-
     # Flatten to a vector
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dropout(dropout_rate))
@@ -74,7 +72,6 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         X_val_seq (np.ndarray): Validation features.
         y_val (np.ndarray): Validation labels.
         params (dict): Dictionary with training hyperparameters (epochs, batch_size, etc.).
-
     Returns:
         tuple:
             - history (History): Keras history object.
@@ -87,8 +84,8 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
     epochs     = params.get("epochs", 20)
     class_weight = params.get("class_weight")
 
-    # MLFlow autolog
-    mlflow.tensorflow.autolog()
+    # MLFlow autolog is removed to allow explicit control
+    # mlflow.tensorflow.autolog() 
     mlflow.set_experiment("Proyecto3_TensorFlow") # Ensure experiment name is set
 
 
@@ -101,6 +98,9 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
             f"act{params.get('activation','relu')}"
         )
         mlflow.set_tag("run_name", run_name)
+        
+        # Log hyperparameters
+        mlflow.log_params(params)
 
         # Train the model
         history = model.fit(
@@ -120,9 +120,6 @@ def train_cnn_model(model, X_train_seq, y_train, X_val_seq, y_val, params):
         mlflow.log_metric("final_val_accuracy", final_val_acc)
         mlflow.log_metric("final_val_loss", final_val_loss)
 
-        # Save the model to MLFlow
-        mlflow.tensorflow.log_model(model, artifact_path="cnn_model")
-
     return history, model, final_val_acc, final_val_loss
 
 
@@ -135,7 +132,6 @@ def reshape_cnn(X_train, X_test, X_val):
         X_train (np.ndarray): 2D Training features (samples, features).
         X_test (np.ndarray): 2D Test features.
         X_val (np.ndarray): 2D Validation features.
-
     Returns:
         tuple:
             - X_train_r (np.ndarray): 3D Training features (samples, 1, features).
@@ -156,6 +152,6 @@ def reshape_cnn(X_train, X_test, X_val):
     # Show resulting shapes
     print(f"✅ X_train reshaped to: {X_train_r.shape}")
     print(f"✅ X_test reshaped to:  {X_test_r.shape}")
-    print(f"✅ X_val reshaped to:   {X_val_r.shape}")
+    print(f"✅ X_val reshaped to: {X_val_r.shape}")
 
     return X_train_r, X_test_r, X_val_r
