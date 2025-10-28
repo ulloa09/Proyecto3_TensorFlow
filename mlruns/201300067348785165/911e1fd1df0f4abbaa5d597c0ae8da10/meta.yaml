@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/911e1fd1df0f4abbaa5d597c0ae8da10/artifacts
+end_time: 1761687372210
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 911e1fd1df0f4abbaa5d597c0ae8da10
+run_name: dashing-cow-800
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761687356921
+status: 3
+tags: []
+user_id: david

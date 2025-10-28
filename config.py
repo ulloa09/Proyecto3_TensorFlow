@@ -80,7 +80,7 @@ N_SPLITS_WF = 5 # Number of folds for the walk-forward evaluation
 # ------------------------------------------------
 # Set to True to run the full training pipeline in main.py
 # Set to False to load an existing model from MLFlow for analysis in main.py
-TRAIN_NEW_MODEL = False
+TRAIN_NEW_MODEL = True
 
 # Specify the version to load if TRAIN_NEW_MODEL is False
 # This must be a string (e.g., "1", "5", "latest")

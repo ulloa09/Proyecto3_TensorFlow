@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/b2dc3b2b87004f179130a8bae68f736a/artifacts
+end_time: 1761689846961
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: b2dc3b2b87004f179130a8bae68f736a
+run_name: debonair-fowl-460
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761689838808
+status: 3
+tags: []
+user_id: david
