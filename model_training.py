@@ -1,12 +1,9 @@
 import numpy as np
 import mlflow
-import tensorflow as tf 
-import traceback 
-import json 
+import traceback
 import config 
-from cnn_model import build_cnn_model, train_cnn_model, reshape_cnn
+from models import build_cnn_model, train_cnn_model, reshape_cnn, build_mlp_model, train_mlp_model
 from graphs import plot_training_history
-from mlp_model import build_mlp_model, train_mlp_model
 from functions import compute_class_weights
 from data_pipeline import load_and_prepare_data, scale_data, prepare_xy_data
 
