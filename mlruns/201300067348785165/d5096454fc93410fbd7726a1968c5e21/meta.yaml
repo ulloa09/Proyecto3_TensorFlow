@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/d5096454fc93410fbd7726a1968c5e21/artifacts
+end_time: 1761590924472
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: d5096454fc93410fbd7726a1968c5e21
+run_name: stylish-lamb-192
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590875467
+status: 3
+tags: []
+user_id: david

@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/models/m-ee41f8a98f8e493b8e74a50c3d8ecdf0/artifacts
+creation_timestamp: 1761589646228
+experiment_id: '201300067348785165'
+last_updated_timestamp: 1761589658995
+model_id: m-ee41f8a98f8e493b8e74a50c3d8ecdf0
+model_type: null
+name: cnn_model
+source_run_id: 5ccb96bf926449bd837b2df7828e6f1a
+status: 2
+status_message: null

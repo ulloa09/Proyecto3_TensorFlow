@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/282a31db4a6f474d812234fd86c87f08/artifacts
+end_time: 1761593238546
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 282a31db4a6f474d812234fd86c87f08
+run_name: Final Model Registration - MLP_dense4_units128
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761593229529
+status: 4
+tags: []
+user_id: david

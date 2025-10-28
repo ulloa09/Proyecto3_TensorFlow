@@ -1,0 +1,22 @@
+artifact_path: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/models/m-c8e8e76a81904441a9a6b0751ed5a8c7/artifacts
+flavors:
+  python_function:
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.tensorflow
+    python_version: 3.13.7
+  tensorflow:
+    code: null
+    data: data
+    keras_version: 2.20.0
+    model_type: keras
+    save_format: tf
+mlflow_version: 3.5.0
+model_id: m-c8e8e76a81904441a9a6b0751ed5a8c7
+model_size_bytes: 120113
+model_uuid: m-c8e8e76a81904441a9a6b0751ed5a8c7
+prompts: null
+run_id: 3063895542b64d0b9751f82728d538ce
+utc_time_created: '2025-10-27 18:33:12.810695'

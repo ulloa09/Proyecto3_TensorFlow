@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/fbb367c7ed304e41852fb885d96cf0f3/artifacts
+end_time: 1761592448319
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: fbb367c7ed304e41852fb885d96cf0f3
+run_name: skittish-ape-782
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761592429347
+status: 3
+tags: []
+user_id: david

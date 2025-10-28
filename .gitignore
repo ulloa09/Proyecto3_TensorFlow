@@ -140,7 +140,6 @@ celerybeat.pid
 .venv
 env/
 venv/
-mlruns/
 venv312/
 ENV/
 env.bak/

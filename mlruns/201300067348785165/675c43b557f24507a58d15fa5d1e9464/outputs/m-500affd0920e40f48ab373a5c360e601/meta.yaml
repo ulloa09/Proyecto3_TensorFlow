@@ -1,0 +1,6 @@
+destination_id: m-500affd0920e40f48ab373a5c360e601
+destination_type: MODEL_OUTPUT
+source_id: m-500affd0920e40f48ab373a5c360e601
+source_type: RUN_OUTPUT
+step: 0
+tags: {}

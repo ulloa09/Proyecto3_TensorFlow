@@ -84,4 +84,4 @@ TRAIN_NEW_MODEL = False
 
 # Specify the version to load if TRAIN_NEW_MODEL is False
 # This must be a string (e.g., "1", "5", "latest")
-MODEL_VERSION_TO_LOAD = "1"
+MODEL_VERSION_TO_LOAD = "3"

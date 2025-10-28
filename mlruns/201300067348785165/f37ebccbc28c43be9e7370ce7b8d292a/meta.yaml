@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/f37ebccbc28c43be9e7370ce7b8d292a/artifacts
+end_time: 1761590875320
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: f37ebccbc28c43be9e7370ce7b8d292a
+run_name: dashing-toad-713
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590818932
+status: 3
+tags: []
+user_id: david

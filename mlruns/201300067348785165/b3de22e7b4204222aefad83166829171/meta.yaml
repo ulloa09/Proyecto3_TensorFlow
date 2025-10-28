@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/b3de22e7b4204222aefad83166829171/artifacts
+end_time: 1761592364342
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: b3de22e7b4204222aefad83166829171
+run_name: intrigued-mole-504
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761592342804
+status: 3
+tags: []
+user_id: david

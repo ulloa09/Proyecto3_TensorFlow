@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/560df37551e647d3a13a5cb1422437dc/artifacts
+end_time: 1761590225851
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 560df37551e647d3a13a5cb1422437dc
+run_name: rumbling-goat-789
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590171443
+status: 3
+tags: []
+user_id: david

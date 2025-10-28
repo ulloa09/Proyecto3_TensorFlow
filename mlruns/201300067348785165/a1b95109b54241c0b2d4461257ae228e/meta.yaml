@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/a1b95109b54241c0b2d4461257ae228e/artifacts
+end_time: 1761590551500
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: a1b95109b54241c0b2d4461257ae228e
+run_name: adaptable-stoat-212
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590488428
+status: 3
+tags: []
+user_id: david

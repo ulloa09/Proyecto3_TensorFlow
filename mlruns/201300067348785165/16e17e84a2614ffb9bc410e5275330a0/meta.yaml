@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/16e17e84a2614ffb9bc410e5275330a0/artifacts
+end_time: 1761593848990
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 16e17e84a2614ffb9bc410e5275330a0
+run_name: bold-bat-148
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761593838000
+status: 3
+tags: []
+user_id: david

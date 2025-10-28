@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/c32c4ffe9b884616838a182beec5682a/artifacts
+end_time: 1761600597248
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: c32c4ffe9b884616838a182beec5682a
+run_name: polite-quail-761
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761600580536
+status: 3
+tags: []
+user_id: david

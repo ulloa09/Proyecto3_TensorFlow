@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/410f25bf38da43a0a84d85dfb1e4874a/artifacts
+end_time: 1761592040472
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 410f25bf38da43a0a84d85dfb1e4874a
+run_name: gentle-fly-886
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761592017008
+status: 3
+tags: []
+user_id: david

@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/a46b646d0db04a8abe0b28e27f56f32d/artifacts
+end_time: 1761590488319
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: a46b646d0db04a8abe0b28e27f56f32d
+run_name: powerful-mouse-83
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590440940
+status: 3
+tags: []
+user_id: david

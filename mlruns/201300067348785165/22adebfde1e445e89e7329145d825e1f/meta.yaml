@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/22adebfde1e445e89e7329145d825e1f/artifacts
+end_time: 1761592016930
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 22adebfde1e445e89e7329145d825e1f
+run_name: persistent-yak-356
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761591990782
+status: 3
+tags: []
+user_id: david

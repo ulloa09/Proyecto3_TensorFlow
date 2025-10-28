@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/a5c1254dbf4f4b1a83b547265e603415/artifacts
+end_time: 1761592849658
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: a5c1254dbf4f4b1a83b547265e603415
+run_name: upset-zebra-716
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761592828620
+status: 3
+tags: []
+user_id: david

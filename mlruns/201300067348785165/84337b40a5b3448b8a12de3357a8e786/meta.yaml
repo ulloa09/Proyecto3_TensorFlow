@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/84337b40a5b3448b8a12de3357a8e786/artifacts
+end_time: 1761590171340
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: 84337b40a5b3448b8a12de3357a8e786
+run_name: agreeable-boar-956
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761590114913
+status: 3
+tags: []
+user_id: david

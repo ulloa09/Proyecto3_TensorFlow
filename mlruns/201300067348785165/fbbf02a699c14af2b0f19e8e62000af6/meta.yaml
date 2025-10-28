@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/fbbf02a699c14af2b0f19e8e62000af6/artifacts
+end_time: 1761593183518
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: fbbf02a699c14af2b0f19e8e62000af6
+run_name: secretive-panda-145
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761593174318
+status: 3
+tags: []
+user_id: david

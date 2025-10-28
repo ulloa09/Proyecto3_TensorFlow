@@ -1,0 +1,14 @@
+artifact_uri: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/cc4cfe93dbb047c680c6ade0edb3b356/artifacts
+end_time: 1761591084452
+entry_point_name: ''
+experiment_id: '201300067348785165'
+lifecycle_stage: active
+run_id: cc4cfe93dbb047c680c6ade0edb3b356
+run_name: sassy-crane-690
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761591047485
+status: 3
+tags: []
+user_id: david

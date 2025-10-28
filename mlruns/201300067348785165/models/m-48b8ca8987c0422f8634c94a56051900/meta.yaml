@@ -1,0 +1,10 @@
+artifact_location: file:///C:/Users/david/Desktop/Trading/Proyecto3_TensorFlow/mlruns/201300067348785165/models/m-48b8ca8987c0422f8634c94a56051900/artifacts
+creation_timestamp: 1761590263097
+experiment_id: '201300067348785165'
+last_updated_timestamp: 1761590276154
+model_id: m-48b8ca8987c0422f8634c94a56051900
+model_type: null
+name: mlp_model
+source_run_id: 2cda5d0100d64f268216e350eb9da798
+status: 2
+status_message: null
