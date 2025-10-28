@@ -205,6 +205,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
     best_model_cnn = None
     best_params_cnn = None
     best_history_cnn = None
+    min_loss_cnn = 10
 
     for i, params in enumerate(params_space_cnn, 1):
         print(f"\n🔹 Training CNN configuration: {i}/{len(params_space_cnn)}: {params}")
@@ -221,7 +222,8 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         print(f"✅ CNN Model {i} -> val_accuracy: {val_acc_cnn:.4f}, val_loss: {val_loss_cnn:.4f}")
         results_cnn.append({"config": i, "params": params, "val_acc": val_acc_cnn, "val_loss": val_loss_cnn, "history": history})
 
-        if val_acc_cnn > best_acc_cnn:
+        if val_acc_cnn < min_loss_cnn:
+            min_loss_cnn = val_loss_cnn
             best_acc_cnn = val_acc_cnn
             best_model_cnn = trained_model
             best_params_cnn = params
@@ -240,6 +242,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
     best_model_mlp = None
     best_params_mlp = None
     best_history_mlp = None
+    min_loss_mlp = 10
 
     for i, params in enumerate(mlp_param_space, 1):
         print(f"\n🔹 Training MLP configuration {i}/{len(mlp_param_space)}: {params}")
@@ -256,7 +259,8 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         print(f"✅ MLP {i} -> val_accuracy: {val_acc:.4f}, val_loss: {val_loss:.4f}")
         results_mlp.append({"config": i, "params": params, "val_acc": val_acc, "val_loss": val_loss, "history": history})
 
-        if val_acc > best_acc_mlp:
+        if val_loss < min_loss_mlp:
+            min_loss_mlp = val_loss
             best_acc_mlp = val_acc
             best_model_mlp = trained_model
             best_params_mlp = params
@@ -269,13 +273,15 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
 
     best_model_accuracy = -1.0
     best_history = []
+    min_loss_general = 15
 
-    if best_acc_mlp > best_acc_cnn:
+    if min_loss_mlp < min_loss_cnn:
         best_model_accuracy = best_acc_mlp
         print(f"\n🏆 Winning Model: MLP (Val Acc: {best_model_accuracy:.4f})")
         best_model = best_model_mlp
         best_params = best_params_mlp
         best_history = best_history_mlp
+        min_loss_general = min_loss_cnn
         model_name = f"MLP_dense{best_params.get('dense_blocks',2)}_units{best_params.get('dense_units',64)}"
         X_train_final = X_train
         X_test_final = X_test
@@ -285,6 +291,7 @@ def train_and_select_best_model(X_train, X_val, X_test, y_train, y_val):
         print(f"\n🏆 Winning Model: CNN (Val Acc: {best_model_accuracy:.4f})")
         best_model = best_model_cnn
         best_params = best_params_cnn
+        min_loss_general = min_loss_cnn
         model_name = f"CNN1D_filters{best_params.get('num_filters',32)}_blocks{best_params.get('conv_blocks',2)}"
         X_train_final = X_train_r
         X_test_final = X_test_r

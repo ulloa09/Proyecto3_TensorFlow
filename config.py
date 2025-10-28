@@ -31,7 +31,7 @@ SPLIT_RATIOS = {'train': 60, 'test': 20, 'validation': 20}
 # ------------------------------------------------
 FWD_RETURN_HORIZON = 5
 LABEL_LOWER = -0.1
-LABEL_UPPER = 0.008
+LABEL_UPPER = 0.002
 
 
 # 3. Model Training Configuration
@@ -63,7 +63,7 @@ mlp_param_space = [
 BACKTEST_PARAMS = {
     'stop_loss': 0.3,
     'take_profit': 0.3,
-    'n_shares': 70
+    'n_shares': 40
 }
 
 # --- Dynamic Drift Parameters ---
@@ -80,7 +80,7 @@ N_SPLITS_WF = 5 # Number of folds for the walk-forward evaluation
 # ------------------------------------------------
 # Set to True to run the full training pipeline in main.py
 # Set to False to load an existing model from MLFlow for analysis in main.py
-TRAIN_NEW_MODEL = True
+TRAIN_NEW_MODEL = False
 
 # Specify the version to load if TRAIN_NEW_MODEL is False
 # This must be a string (e.g., "1", "5", "latest")
